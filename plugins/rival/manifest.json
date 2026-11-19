@@ -1,0 +1,10 @@
+{
+  "id": "rival",
+  "name": "Rival",
+  "version": "1.0.0",
+  "description": "Compare your topic ratings with a friend's and find problems they solved that you are likely to crack next.",
+  "author": "The Syndicate (example plugin)",
+  "entry": "plugin.js",
+  "slots": ["page"],
+  "api_version": "1"
+}
