@@ -1,0 +1,187 @@
+{
+ "sizes": {
+  "hero": [
+   2160,
+   1672
+  ],
+  "today_why": [
+   1800,
+   1520
+  ],
+  "insights": [
+   2160,
+   1100
+  ],
+  "charts": [
+   2160,
+   680
+  ],
+  "week": [
+   1560,
+   1096
+  ],
+  "model": [
+   2240,
+   1440
+  ],
+  "plugins": [
+   2160,
+   740
+  ],
+  "light": [
+   2160,
+   1272
+  ],
+  "rival_chart": [
+   2160,
+   2140
+  ],
+  "rival_reach": [
+   2160,
+   870
+  ],
+  "rival_head": [
+   2160,
+   360
+  ]
+ },
+ "curve": {
+  "ratings": [
+   1000,
+   1100,
+   1200,
+   1300,
+   1400,
+   1500,
+   1600,
+   1700,
+   1800,
+   1900,
+   2000,
+   2100,
+   2200,
+   2300,
+   2400,
+   2500,
+   2600,
+   2700,
+   2800
+  ],
+  "chance": [
+   97.2,
+   96.2,
+   94.8,
+   93.0,
+   90.5,
+   87.3,
+   83.2,
+   78.2,
+   72.1,
+   65.0,
+   57.3,
+   49.2,
+   41.1,
+   33.5,
+   26.6,
+   20.7,
+   15.9,
+   12.0,
+   8.9
+  ]
+ },
+ "calibration": [
+  {
+   "low": 0.0,
+   "high": 0.1,
+   "count": 3568,
+   "mean_predicted": 0.04,
+   "observed_rate": 0.0081
+  },
+  {
+   "low": 0.1,
+   "high": 0.2,
+   "count": 1349,
+   "mean_predicted": 0.1453,
+   "observed_rate": 0.066
+  },
+  {
+   "low": 0.2,
+   "high": 0.3,
+   "count": 952,
+   "mean_predicted": 0.2462,
+   "observed_rate": 0.1702
+  },
+  {
+   "low": 0.3,
+   "high": 0.4,
+   "count": 853,
+   "mean_predicted": 0.35,
+   "observed_rate": 0.2802
+  },
+  {
+   "low": 0.4,
+   "high": 0.5,
+   "count": 769,
+   "mean_predicted": 0.4506,
+   "observed_rate": 0.42
+  },
+  {
+   "low": 0.5,
+   "high": 0.6,
+   "count": 847,
+   "mean_predicted": 0.5534,
+   "observed_rate": 0.5939
+  },
+  {
+   "low": 0.6,
+   "high": 0.7,
+   "count": 1026,
+   "mean_predicted": 0.6521,
+   "observed_rate": 0.7485
+  },
+  {
+   "low": 0.7,
+   "high": 0.8,
+   "count": 1576,
+   "mean_predicted": 0.7544,
+   "observed_rate": 0.8439
+  },
+  {
+   "low": 0.8,
+   "high": 0.9,
+   "count": 3323,
+   "mean_predicted": 0.8587,
+   "observed_rate": 0.9124
+  },
+  {
+   "low": 0.9,
+   "high": 1.0,
+   "count": 22186,
+   "mean_predicted": 0.9726,
+   "observed_rate": 0.9716
+  }
+ ],
+ "metrics": {
+  "model": {
+   "auc": 0.9467,
+   "brier": 0.0587,
+   "log_loss": 0.2164
+  },
+  "elo_baseline": {
+   "auc": 0.9068,
+   "brier": 0.147,
+   "log_loss": 0.488
+  }
+ },
+ "band": {
+  "n": 1873,
+  "observed_rate": 0.6786
+ },
+ "split": {
+  "method": "chronological",
+  "cutoff": 1769665101,
+  "train_attempts": 145793,
+  "test_attempts": 36449,
+  "users": 200
+ }
+}
