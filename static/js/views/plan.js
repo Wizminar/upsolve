@@ -1,21 +1,6 @@
 import { api } from "../api.js";
-import { h, s, fillVar, pct, status } from "../ui.js";
+import { h, pct, status } from "../ui.js";
 import { renderSlot } from "../plugin-host.js";
-
-// Progress drawn as logbook tally marks: four strokes and a strike-through per five.
-function tally(done, target) {
-  const groups = Math.ceil(Math.max(done, target) / 5);
-  const W = groups * 46, H = 44;
-  const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" });
-  for (let i = 0; i < Math.max(done, target); i++) {
-    const g = Math.floor(i / 5), k = i % 5, x0 = g * 46 + 4;
-    const filled = i < done;
-    const attrs = { stroke: filled ? "var(--ink)" : "var(--rule)", "stroke-width": 3.5, "stroke-linecap": "round" };
-    if (k < 4) svg.append(s("line", { ...attrs, x1: x0 + k * 9, y1: 6, x2: x0 + k * 9 + 1, y2: 38 }));
-    else svg.append(s("line", { ...attrs, x1: x0 - 4, y1: 32, x2: x0 + 32, y2: 12 }));
-  }
-  return svg;
-}
 
 function settingsForm(ctx, training, allTopics, myTopics, onSaved) {
   const mine = new Map(myTopics.map((t) => [t.tag, t]));
@@ -27,7 +12,7 @@ function settingsForm(ctx, training, allTopics, myTopics, onSaved) {
       onchange: (e) => { e.target.checked ? chosen.add(t.tag) : chosen.delete(t.tag); sync(); } });
     boxes.push(cb);
     const m = mine.get(t.tag);
-    return h("label", null, cb, h("span", null, t.tag, m ? ` (${m.rating})` : ""));
+    return h("label", null, cb, h("span", null, t.tag, m ? h("small", null, m.rating) : null));
   }));
   sync();
   const target = h("input", { type: "number", id: "weekly-target", min: 1, max: 30, value: training.weekly_target, required: true });
@@ -35,26 +20,23 @@ function settingsForm(ctx, training, allTopics, myTopics, onSaved) {
       e.preventDefault();
       try {
         await api.setTraining(ctx.handle, { topics: [...chosen], weekly_target: Number(target.value) });
-        status("Training settings saved.");
+        status("Saved.");
         onSaved();
       } catch (err) { status(err.message, "error"); }
     } },
-    h("h2", { id: "h-settings" }, "Training settings"),
+    h("h2", { id: "h-settings" }, "Settings"),
     h("div", { class: "settings-grid" },
       h("fieldset", null,
         h("legend", null, "Focus topics"),
         pick,
-        h("p", { class: "help" }, "Choose up to two. Your current rating is shown next to topics you've tried.")),
-      h("div", null,
-        h("fieldset", null,
-          h("legend", null, h("label", { for: "weekly-target" }, "Weekly solve target")),
-          target,
-          h("p", { class: "help" }, "Accepted problems in your focus topics count toward this (all topics if none are chosen).")),
-        h("button", { class: "btn btn-ink", type: "submit" }, "Save settings"))));
+        h("p", { class: "help" }, "Up to two. Your rating is shown next to topics you've tried.")),
+      h("div", { class: "settings-actions" },
+        h("label", { for: "weekly-target" }, "Problems per week"), target,
+        h("button", { class: "btn btn-ink", type: "submit" }, "Save"))));
 }
 
 export async function renderPlan(view, ctx) {
-  view.replaceChildren(h("p", { class: "skeleton" }, "Planning your week…"));
+  view.replaceChildren(h("p", { class: "skeleton" }, "Loading…"));
   let plan, training, allTopics, myTopics;
   try {
     [plan, training, allTopics, myTopics] = await Promise.all([
@@ -66,23 +48,22 @@ export async function renderPlan(view, ctx) {
   const todayKey = new Date().toLocaleDateString("sv-SE");
   const start = new Date(plan.week_start + "T00:00:00");
   const left = plan.weekly_target - plan.progress;
+  const share = Math.min(100, Math.round(plan.progress / plan.weekly_target * 100));
 
   const week = h("ol", { class: "week", "aria-label": "This week, Monday to Sunday" }, plan.days.map((d) => {
     const isToday = d.day === todayKey;
-    const date = new Date(d.day + "T00:00:00");
+    const extra = d.solved.filter((x) => !d.planned.some((p) => p.problem_id === x.problem_id));
+    const rows = [
+      ...d.planned.filter((p) => p.problem_id).map((p) =>
+        h("a", { class: p.done ? "slot is-done" : "slot", href: p.url, target: "_blank", rel: "noopener" },
+          h("b", null, p.name), h("span", null, `${p.rating}, ${pct(p.probability)}`),
+          p.done ? h("span", { class: "visually-hidden" }, " (solved)") : null)),
+      ...extra.map((x) => h("div", { class: "slot slot-solved" },
+        h("b", null, x.name || x.problem_id), h("span", null, x.counts ? "solved" : "solved, other topic"))),
+    ];
     return h("li", { class: isToday ? "day is-today" : "day", "aria-current": isToday ? "date" : null },
-      h("h3", null, h("span", null, d.weekday), h("span", null, date.getDate())),
-      d.planned.map((p) => p.problem_id
-        ? h("a", { class: p.done ? "slot is-done" : "slot", href: p.url, target: "_blank", rel: "noopener",
-            style: { "--band": fillVar(p.rating) } },
-            h("b", null, p.problem_id), p.name, h("br"),
-            h("span", null, `${p.rating}, ${pct(p.probability)} chance`),
-            p.done ? h("span", { class: "visually-hidden" }, " (solved)") : null)
-        : h("p", { class: "slot" }, "No match found for this slot.")),
-      d.solved.filter((x) => !d.planned.some((p) => p.problem_id === x.problem_id)).map((x) =>
-        h("div", { class: "slot slot-solved", style: { "--band": fillVar(x.rating) } },
-          h("b", null, `✓ ${x.problem_id}`), x.name || "",
-          h("br"), h("span", null, x.counts ? "solved, counts" : "solved, other topic"))));
+      h("h3", null, isToday ? "Today" : d.weekday),
+      h("div", { class: "day-items" }, rows.length ? rows : h("span", { class: "day-empty" }, "Rest")));
   }));
 
   view.replaceChildren(
@@ -91,12 +72,13 @@ export async function renderPlan(view, ctx) {
         h("div", { class: "view-head" }, h("div", null,
           h("h2", null, `Week of ${start.toLocaleDateString(undefined, { day: "numeric", month: "long" })}`),
           h("p", null, plan.focus.length
-            ? `Training ${plan.focus.join(" and ")}. Problems start near a 70% chance on Monday and stretch toward 50% by the weekend.`
-            : "No focus topics set, so the plan mixes topics near your level."))),
-        h("div", { class: "tally" },
-          tally(plan.progress, plan.weekly_target),
-          h("p", null, `${plan.progress} of ${plan.weekly_target} solved`,
-            h("small", null, left > 0 ? `${left} to go this week. Progress updates when you sync.` : "Target reached. Anything more is a bonus."))),
+            ? `Focused on ${plan.focus.join(" and ")}. Easier early in the week, harder later.`
+            : "No focus topics, so the week mixes topics near your level."))),
+        h("div", { class: "progress" },
+          h("div", { class: "progress-bar", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": plan.weekly_target,
+            "aria-valuenow": plan.progress, "aria-label": "Solved this week" }, h("span", { style: { width: `${share}%` } })),
+          h("p", null, h("b", null, `${plan.progress} of ${plan.weekly_target}`), " solved. ",
+            left > 0 ? "Sync after solving to update." : "Target reached.")),
         week),
       settingsForm(ctx, training, allTopics, myTopics, () => renderPlan(view, ctx))));
   renderSlot("plan", view, { plan });
