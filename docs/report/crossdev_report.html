@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rival: Cross-dev Project Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="report.css">
+</head>
+<body>
+
+<!-- ============================================================ Cover -->
+<section class="cover">
+  <div>
+    <div class="mark"><svg viewBox="0 0 20 20" fill="none" stroke="#2F49D1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l6-6 6 6"/></svg></div>
+    <p class="kind">CS698B Cross-dev Project Report</p>
+    <h1>Rival: a plugin<br>for Upsolve</h1>
+    <p class="sub">A cross-dev project for <b>The Syndicate</b>. Rival runs inside their application, Upsolve, and is built entirely on the Upsolve API made by The Syndicate. It lets a programmer compare themselves with a friend, topic by topic, and find the friend's solved problems that they are most likely to solve next.</p>
+  </div>
+  <div class="meta">
+    <p><b>Cross-dev team</b></p>
+    <table>
+      <tr><td>Divyanshu Anand</td><td>265011</td></tr>
+      <tr><td>Divyanshu Lohani</td><td>265012</td></tr>
+      <tr><td>Yash</td><td>265031</td></tr>
+      <tr><td>Yash Akarsh</td><td>265032</td></tr>
+      <tr><td>Ishan Aryan</td><td>265016</td></tr>
+      <tr><td>Gaurav Verma</td><td>265014</td></tr>
+    </table>
+    <p style="margin-top:14pt">Cross-dev for: <b>The Syndicate</b> (base project: Upsolve, a Codeforces practice coach)</p>
+    <p>Built on: <b>the Upsolve API, made by The Syndicate</b></p>
+    <p>Try it: <b>https://upsolve.mohitupawar.com</b>, Rival tab</p>
+    <p class="muted" style="margin-top:10pt">November 2026</p>
+  </div>
+</section>
+
+<!-- ============================================================ Contents + abstract -->
+<section class="chapter">
+  <h2>Contents</h2>
+  <ul class="toc">
+    <li><span></span><span>Abstract</span></li>
+    <li><span>1</span><span>Introduction</span></li>
+    <li><span>2</span><span>What Rival does</span></li>
+    <li><span>3</span><span>How Rival fits into Upsolve</span></li>
+    <li><span>4</span><span>Design and implementation</span></li>
+    <li><span>5</span><span>Visualisation and accessibility</span></li>
+    <li><span>6</span><span>Testing</span></li>
+    <li><span>7</span><span>Results</span></li>
+    <li><span>8</span><span>Limitations and future work</span></li>
+    <li><span>9</span><span>Team contributions and AI usage</span></li>
+    <li><span>10</span><span>Acknowledgements</span></li>
+  </ul>
+
+  <h2 style="margin-top:28pt">Abstract</h2>
+  <p class="abstract">For the cross-dev part of CS698B, our team built a plugin for <b>The Syndicate</b>'s project, <b>Upsolve</b>, a Codeforces practice coach. The course asks that cross-dev work runs inside the base application, so Rival is not a separate website: it appears as its own tab inside Upsolve.</p>
+  <p class="abstract">Rival answers two questions a competitive programmer often asks about a friend: <i>"Where are they stronger than me?"</i> and <i>"Which of their solved problems should I try next?"</i> It draws a diverging bar chart of topic ratings for the two users, and lists five problems the friend solved that the user has about a 60% chance of solving.</p>
+  <p class="abstract">Rival contains no server code. All of its data, including the solve-chance predictions from Upsolve's machine-learning model, comes from the <b>Upsolve API made by The Syndicate</b>. The whole plugin is one manifest file and about 110 lines of JavaScript.</p>
+</section>
+
+<!-- ============================================================ 1 -->
+<section class="chapter">
+  <div class="num">Chapter 1</div>
+  <h2>Introduction</h2>
+
+  <h3>1.1 The cross-dev task</h3>
+  <p>In CS698B each team builds its own project and also builds an extension for another team's project. We were paired with <b>The Syndicate</b> (Ashirvad Dwivedi, Mohit Shankar Pawar, Chaitanya Kumar, Bishal Podder), whose project is <b>Upsolve</b>. The rule for cross-dev work is that it must run inside the base application, using what that application exposes, rather than as a separate product.</p>
+
+  <h3>1.2 The base project: Upsolve</h3>
+  <p>Upsolve, built by The Syndicate, reads a programmer's public Codeforces history, rates them in every topic, predicts their chance of solving any problem, and recommends problems in a 50&ndash;70% "stretch zone". It offers an API and a plugin system so that other teams can add features without changing Upsolve's own code. Rival uses both.</p>
+
+  <h3>1.3 Our idea</h3>
+  <p>Practising alongside a friend is one of the most common ways programmers stay motivated. Upsolve shows a user how they are doing on their own, but not how they compare with someone else. Rival adds that social view, and turns it into something actionable: problems the friend has already solved that are within the user's reach.</p>
+
+  <h3>1.4 Goals</h3>
+  <table>
+    <tr><th style="width:36%">Goal</th><th>How Rival meets it</th></tr>
+    <tr><td>Run inside Upsolve</td><td>Rival is an Upsolve plugin and appears as its own tab</td></tr>
+    <tr><td>Use the base project's API</td><td>All data comes from the Upsolve API made by The Syndicate</td></tr>
+    <tr><td>Be genuinely useful</td><td>Shows strengths against a friend and five problems to try next</td></tr>
+    <tr><td>Match Upsolve's quality bar</td><td>Same visual style, keyboard support, chart with a data table</td></tr>
+    <tr><td>Stay safe for the host</td><td>Isolated from the rest of the page; no server code</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="chapter">
+  <div class="num">Chapter 2</div>
+  <h2>What Rival does</h2>
+
+  <h3>2.1 Choosing a rival</h3>
+  <p>The user opens the <b>Rival</b> tab in Upsolve, types a friend's Codeforces handle and presses <b>Compare</b>. Rival remembers the choice, so the comparison is ready the next time the tab is opened. If the friend has never been imported into Upsolve, Rival asks Upsolve to import them first and shows the progress.</p>
+  <figure>
+    <img src="img/rival_form.png" alt="Rival tab with a field for the rival's handle and a Change rival button" style="max-height:40mm">
+    <figcaption><b>Figure 2.1</b> The top of the Rival tab: a short explanation, the rival's handle and a button to change it.</figcaption>
+  </figure>
+
+  <h3>2.2 Comparing every topic</h3>
+  <p>Rival draws one row per topic both users have practised. A bar to the right means the user is ahead in that topic; a dashed bar to the left means the rival is ahead. The length of the bar is the size of the gap in rating points.</p>
+  <figure>
+    <img src="img/rival_chart.png" alt="Diverging bar chart of topic rating differences between two users" style="max-height:120mm">
+    <figcaption><b>Figure 2.2</b> Mann_Chauhan compared with samarp1001. Mann_Chauhan is ahead in most topics (solid bars, for example +339 in graphs), while samarp1001 is ahead in games and geometry (dashed outlines).</figcaption>
+  </figure>
+
+  <h3>2.3 Problems within reach</h3>
+  <p>Below the chart, Rival lists five problems the rival has solved and the user has not, chosen because the user has a good chance of solving them. Each shows the problem's difficulty, name, topics and the user's predicted chance, and links straight to Codeforces.</p>
+  <figure>
+    <img src="img/rival_reach.png" alt="List of five problems solved by the rival with the user's chance of solving each">
+    <figcaption><b>Figure 2.3</b> "Solved by samarp1001, within your reach": each row shows difficulty, problem, topics and the chance of solving, which comes from Upsolve's model.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="chapter">
+  <div class="num">Chapter 3</div>
+  <h2>How Rival fits into Upsolve</h2>
+
+  <h3>3.1 A plugin, not a separate app</h3>
+  <p>Upsolve supports plugins: small add-ons that live in a folder and appear inside the application. Rival is one of them. It consists of just two files:</p>
+  <pre>plugins/
+  rival/
+    manifest.json    name, version, author and where Rival appears
+    plugin.js        the code: about 110 lines of JavaScript</pre>
+  <p>The manifest tells Upsolve what the plugin is called, which file to load and where it appears. Rival appears as its own tab (the <code>page</code> slot).</p>
+  <pre>{
+  "id": "rival",
+  "name": "Rival",
+  "version": "1.0.0",
+  "description": "Compare your topic ratings with a friend's and find problems they solved that you are likely to crack next.",
+  "author": "Cross-dev team",
+  "entry": "plugin.js",
+  "slots": ["page"],
+  "api_version": "1"
+}</pre>
+
+  <h3>3.2 How it appears in the app</h3>
+  <ol class="steps">
+    <li><b>Installed.</b> The <code>rival</code> folder is placed in Upsolve's plugins folder.</li>
+    <li><b>Checked.</b> Upsolve reads the manifest, checks it and lists Rival on its Plugins page.</li>
+    <li><b>Loaded.</b> When the app opens, Upsolve loads Rival's JavaScript into the page.</li>
+    <li><b>Shown.</b> Rival adds a tab called Rival. When the user opens it, Rival draws its content.</li>
+  </ol>
+  <figure>
+    <img src="img/plugins.png" alt="Upsolve Plugins page listing Rival, by Cross-dev team, switched on" style="max-height:62mm">
+    <figcaption><b>Figure 3.1</b> Upsolve's Plugins page lists Rival with its description and author, and lets the user switch it on or off.</figcaption>
+  </figure>
+
+  <h3>3.3 Built on the API made by The Syndicate</h3>
+  <p>Rival has no server and does not contact Codeforces itself. Everything it shows comes from the <b>Upsolve API, made by The Syndicate</b>:</p>
+  <table>
+    <tr><th style="width:32%">What Rival uses</th><th>What it is used for</th></tr>
+    <tr><td>Topic ratings</td><td>Both users' rating in every topic, for the comparison chart</td></tr>
+    <tr><td>Attempt history</td><td>Which problems the rival solved and the user has not</td></tr>
+    <tr><td>Chance of solving</td><td>Upsolve's machine-learning prediction for the user, for each candidate problem</td></tr>
+    <tr><td>Importing a handle</td><td>Bringing a new rival into Upsolve when needed</td></tr>
+    <tr><td>Plugin storage</td><td>Remembering the chosen rival and the last comparison</td></tr>
+  </table>
+  <div class="note"><p>Because the data and the model belong to Upsolve, Rival automatically benefits from any improvement The Syndicate makes to their ratings or predictions, without any change to Rival.</p></div>
+
+  <h3>3.4 Isolation and safety</h3>
+  <p>Upsolve draws each plugin in its own isolated area of the page. Rival's styles cannot change the rest of Upsolve, and if Rival ever hit an error, only the Rival tab would show it; the rest of the application keeps working. Users can also switch Rival off on the Plugins page.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="chapter">
+  <div class="num">Chapter 4</div>
+  <h2>Design and implementation</h2>
+
+  <h3>4.1 What happens when the tab opens</h3>
+  <ol class="steps">
+    <li><b>Read the saved rival.</b> Rival checks its storage for a previously chosen handle. If there is none, it shows only the input field.</li>
+    <li><b>Load both users' topics.</b> Rival asks Upsolve for the topic ratings of the user and of the rival. If the rival is unknown to Upsolve, Rival starts an import, shows each stage ("Importing samarp1001: submissions..."), and continues when it finishes.</li>
+    <li><b>Draw the comparison.</b> Rival matches topics, keeps those both users have tried at least three times, sorts them by the gap and draws the chart.</li>
+    <li><b>Find problems within reach.</b> Rival takes the rival's solved problems that the user has not solved, asks Upsolve for the user's chance on each, and keeps the five closest to 60%.</li>
+    <li><b>Save the comparison.</b> Rival stores when the comparison was made and how many topics were in common.</li>
+  </ol>
+
+  <h3>4.2 The comparison</h3>
+  <p>For each topic, Rival computes the difference <code>your rating − rival's rating</code>. A topic is only shown when both users have at least three attempts in it, because ratings built on one or two attempts are unreliable and would make the chart misleading. Topics are sorted from where the user leads most to where the rival leads most, so the chart reads from strengths at the top to gaps at the bottom.</p>
+
+  <h3>4.3 Choosing problems within reach</h3>
+  <table>
+    <tr><th style="width:5%">Step</th><th>What Rival does</th><th style="width:30%">Why</th></tr>
+    <tr><td>1</td><td>Take up to 25 recent problems the rival solved</td><td>Recent problems match current contest styles; the cap keeps the tab fast</td></tr>
+    <tr><td>2</td><td>Drop any the user has already solved</td><td>Only new practice is useful</td></tr>
+    <tr><td>3</td><td>Get the user's chance of solving each from Upsolve's model</td><td>Uses The Syndicate's trained model, so the chances are personal and tested</td></tr>
+    <tr><td>4</td><td>Sort by distance from a 60% chance; keep five</td><td>The same stretch-zone idea that Upsolve's own recommendations use</td></tr>
+  </table>
+  <p>The requests for the user's chances are sent together rather than one after another, so the list appears quickly. If one request fails, that problem is simply skipped instead of stopping the whole list.</p>
+
+  <h3>4.4 Clear messages for every situation</h3>
+  <table>
+    <tr><th style="width:38%">Situation</th><th>What the user sees</th></tr>
+    <tr><td>No rival chosen yet</td><td>A short explanation and the handle field</td></tr>
+    <tr><td>Rival not yet in Upsolve</td><td>Live import progress, then the comparison</td></tr>
+    <tr><td>No topics in common</td><td>"You have no topics in common with at least 3 attempts each."</td></tr>
+    <tr><td>Nothing new to suggest</td><td>A message that the rival has no recent solves the user hasn't solved too</td></tr>
+  </table>
+
+  <h3>4.5 Code structure</h3>
+  <table>
+    <tr><th style="width:30%">Part of plugin.js</th><th>Responsibility</th></tr>
+    <tr><td><code>register</code></td><td>Adds the Rival tab to Upsolve</td></tr>
+    <tr><td><code>render</code></td><td>Builds the tab: form, comparison and suggestions</td></tr>
+    <tr><td><code>diverging</code></td><td>Draws the comparison chart and its data table</td></tr>
+    <tr><td><code>waitForSync</code></td><td>Follows the import of a new rival and reports progress</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="chapter">
+  <div class="num">Chapter 5</div>
+  <h2>Visualisation and accessibility</h2>
+
+  <h3>5.1 Why a diverging bar chart</h3>
+  <p>The question "who is stronger, and where?" is a comparison around a middle point, so a diverging chart is the natural fit: a centre line for "equal", bars to one side for the user and to the other for the rival. The eye immediately sees which side has more bars and where the longest ones are. The chart is drawn as SVG using Upsolve's own drawing helpers, so it matches the rest of the application in both light and dark themes.</p>
+
+  <h3>5.2 Design choices</h3>
+  <table>
+    <tr><th style="width:32%">Choice</th><th>Reason</th></tr>
+    <tr><td>Solid bars for the user, dashed outlines for the rival</td><td>The difference is visible in shape, not only colour, and survives black-and-white printing</td></tr>
+    <tr><td>Exact gap next to every bar</td><td>No need to estimate lengths; "+339" is read directly</td></tr>
+    <tr><td>Sorted by gap</td><td>Strengths at the top, gaps at the bottom, in one reading order</td></tr>
+    <tr><td>Upsolve's colours and typeface</td><td>Rival feels like part of the app, not a bolt-on</td></tr>
+  </table>
+
+  <h3>5.3 Accessibility</h3>
+  <ul>
+    <li>The chart is marked as an image with a full text description listing every topic and its gap, which screen readers read aloud.</li>
+    <li>A "Show data as a table" option gives every number: topic, both ratings and the difference.</li>
+    <li>Colour is never the only signal: solid against dashed shapes and signed numbers carry the meaning.</li>
+    <li>The form uses a proper label, a real button and works fully by keyboard.</li>
+    <li>Loading and import messages are announced to screen readers as they change.</li>
+    <li>Every problem title is a real link to Codeforces.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 6, 7 -->
+<section class="chapter">
+  <div class="num">Chapter 6</div>
+  <h2>Testing</h2>
+  <p>Rival is tested inside Upsolve, on a local copy and on the hosted site, with the following cases:</p>
+  <table>
+    <tr><th style="width:36%">Test case</th><th>Expected behaviour</th></tr>
+    <tr><td>Rival with real handles at different levels</td><td>Correct chart and suggestions (verified with Mann_Chauhan against samarp1001)</td></tr>
+    <tr><td>Rival not yet imported into Upsolve</td><td>Import starts automatically; progress shown; comparison appears afterwards</td></tr>
+    <tr><td>Handle that does not exist</td><td>The error is shown inside the Rival tab; the rest of the app is unaffected</td></tr>
+    <tr><td>Rival chosen, page reloaded</td><td>The saved rival is remembered</td></tr>
+    <tr><td>Light and dark themes</td><td>Chart and list readable in both</td></tr>
+    <tr><td>Keyboard only</td><td>Every control reachable and usable</td></tr>
+    <tr><td>Screen reader</td><td>Chart description and data table read correctly</td></tr>
+    <tr><td>Plugin switched off and on</td><td>Tab disappears and returns; Upsolve keeps working</td></tr>
+  </table>
+  <p>Upsolve's own automated test suite, written by The Syndicate, also checks the plugin system Rival depends on: manifest checks, the plugin list and plugin storage.</p>
+
+  <div class="num" style="margin-top:24pt">Chapter 7</div>
+  <h2>Results</h2>
+  <ul>
+    <li><b>Runs inside Upsolve.</b> Rival is installed, listed on the Plugins page and available as its own tab on the live site.</li>
+    <li><b>Built on the base project.</b> Every number Rival shows comes from the Upsolve API made by The Syndicate, including predictions from their model.</li>
+    <li><b>Useful in seconds.</b> One handle gives a full topic comparison and five problems to try next.</li>
+    <li><b>Small and safe.</b> One manifest and about 110 lines of JavaScript, isolated from the rest of the app.</li>
+    <li><b>Accessible.</b> Chart description, data table, shape-based encoding and full keyboard support.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 8, 9, 10 -->
+<section class="chapter">
+  <div class="num">Chapter 8</div>
+  <h2>Limitations and future work</h2>
+  <table>
+    <tr><th style="width:40%">Limitation</th><th>Possible improvement</th></tr>
+    <tr><td>One rival at a time</td><td>Compare against a small group of friends</td></tr>
+    <tr><td>Only up to 25 of the rival's recent solves are considered</td><td>Page through older solves on request</td></tr>
+    <tr><td>Topics need three attempts each to appear</td><td>Show low-evidence topics in grey instead of hiding them</td></tr>
+    <tr><td>A snapshot, not a trend</td><td>Use stored comparisons to show how the gap changes over time</td></tr>
+  </table>
+
+  <div class="num" style="margin-top:24pt">Chapter 9</div>
+  <h2>Team contributions and AI usage</h2>
+  <h3>9.1 Team contributions</h3>
+  <table>
+    <tr><th style="width:32%">Member</th><th style="width:14%">Roll no.</th><th>Main contributions</th></tr>
+    <tr><td>Divyanshu Anand</td><td>265011</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Divyanshu Lohani</td><td>265012</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Yash</td><td>265031</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Yash Akarsh</td><td>265032</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Ishan Aryan</td><td>265016</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Gaurav Verma</td><td>265014</td><td class="muted">To be filled in by the team</td></tr>
+  </table>
+  <h3>9.2 Use of AI tools</h3>
+  <div class="todo"><p><b>To be written by the team.</b> The course requires this section to be written by the team members themselves. Describe which AI tools were used, for which parts of the project, and how their output was checked.</p></div>
+
+  <div class="num" style="margin-top:14pt">Chapter 10</div>
+  <h2>Acknowledgements</h2>
+  <p>Rival is a cross-dev project for <b>The Syndicate</b>. It would not exist without Upsolve, its plugin system and <b>the Upsolve API made by The Syndicate</b>, which provide all of Rival's data and predictions. We thank Ashirvad Dwivedi, Mohit Shankar Pawar, Chaitanya Kumar and Bishal Podder for building a platform that was straightforward to extend.</p>
+</section>
+
+</body>
+</html>
