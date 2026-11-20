@@ -10,17 +10,35 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/app.css">
+  <script>
+    // Dark by default; remember the visitor's choice. Runs before paint to avoid a flash.
+    (function () {
+      var t = "dark";
+      try { t = localStorage.getItem("upsolve-theme") || "dark"; } catch (e) {}
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="masthead">
-    <a class="wordmark" href="/">Upsolve</a>
+    <a class="wordmark" href="/" aria-label="Upsolve home">
+      <svg class="logo" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l6-6 6 6"/></svg>
+      <span>Upsolve</span>
+    </a>
     <form class="handle-form" id="handle-form" role="search" aria-label="Load a Codeforces handle">
       <label for="handle-input" class="visually-hidden">Codeforces handle</label>
       <input id="handle-input" name="handle" autocomplete="off" spellcheck="false" placeholder="Handle"
              pattern="[A-Za-z0-9_.\-]{3,24}" required>
       <button type="submit" class="btn btn-ink">Open</button>
     </form>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light mode">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle class="sun" cx="12" cy="12" r="4.5"/>
+        <path class="sun" d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        <path class="moon" d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>
+      </svg>
+    </button>
   </header>
 
   <div id="status" class="status" role="status" aria-live="polite"></div>
