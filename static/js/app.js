@@ -12,7 +12,7 @@ const main = document.getElementById("main");
 const VIEWS = [
   { id: "today", label: "Today", render: renderToday },
   { id: "insights", label: "Insights", render: renderInsights },
-  { id: "plan", label: "Week plan", render: renderPlan },
+  { id: "plan", label: "Week", render: renderPlan },
   { id: "plugins", label: "Plugins", render: renderPlugins },
 ];
 
@@ -32,6 +32,7 @@ export function go(handle, view = "today", replace = false) {
 async function route() {
   const { handle, view } = parseLocation();
   document.getElementById("text-link").href = handle ? `/text/${encodeURIComponent(handle)}` : "/";
+  document.body.classList.toggle("is-landing", !handle);
   if (!handle) {
     state.handle = null;
     document.title = "Upsolve";
@@ -129,17 +130,15 @@ function renderShell() {
     if (j !== null) { e.preventDefault(); btns[j].focus(); btns[j].click(); }
   });
 
+  const rank = p.rank ? p.rank[0].toUpperCase() + p.rank.slice(1) : "Unrated";
   const who = h("section", { class: "who", "aria-label": "Profile" },
-    h("div", null,
-      h("h1", { class: rankClass(p.rating) }, p.handle),
-      h("p", { class: "who-sync" },
-        `${p.rank ? p.rank[0].toUpperCase() + p.rank.slice(1) : "Unrated"}. Synced ${ago(p.last_synced_at)}. `,
-        h("button", { class: "linkish", type: "button", onclick: () => syncThenRender(p.handle) }, "Sync again"))),
-    h("dl", { class: "who-meta" },
-      h("div", null, h("dt", null, "Contest rating"), h("dd", { class: rankClass(p.rating) }, p.rating ?? "—",
-        p.max_rating ? h("small", null, ` max ${p.max_rating}`) : null)),
-      h("div", null, h("dt", null, "Practice rating"), h("dd", { class: rankClass(p.practice_rating) }, p.practice_rating)),
-      h("div", null, h("dt", null, "Solved"), h("dd", null, p.problems_solved, h("small", null, ` of ${p.attempts} tried`)))));
+    h("h1", { class: rankClass(p.rating) }, p.handle),
+    h("p", { class: "who-line" },
+      h("span", null, `${rank} `, h("b", null, p.rating ?? "–"), p.max_rating ? ` (max ${p.max_rating})` : ""),
+      h("span", null, "Practice rating ", h("b", null, p.practice_rating)),
+      h("span", null, h("b", null, p.problems_solved), " solved"),
+      h("span", null, `Synced ${ago(p.last_synced_at)}. `,
+        h("button", { class: "linkish", type: "button", onclick: () => syncThenRender(p.handle) }, "Sync now"))));
 
   const viewEl = h("div", { class: "view", id: "view", role: "tabpanel", "aria-labelledby": `tab-${state.view}` });
   main.replaceChildren(who, tabs, viewEl);

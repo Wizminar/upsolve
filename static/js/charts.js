@@ -9,74 +9,42 @@ function niceTicks(lo, hi, step) {
   return out;
 }
 
-// ---------------------------------------------------------------- the rating ladder
+// ---------------------------------------------------------------- the round ruler
 
 /**
- * Vertical ladder of rank bands with recommended problems pinned at their rating.
- * items: [{problem_id, rating}], you: practice rating.
+ * Horizontal rating ruler: today's problems by letter, your practice rating and the stretch zone.
+ * items: [{letter, problem_id, rating}], you: practice rating, zone: [lo, hi].
  */
-export function ladder({ you, zone, items, onPin }) {
-  const ratings = items.map((i) => i.rating).concat([you, zone[0], zone[1]]);
-  const lo = Math.max(800, Math.floor((Math.min(...ratings) - 300) / 100) * 100);
-  const hi = Math.min(3600, Math.ceil((Math.max(...ratings) + 300) / 100) * 100);
-  const W = 168, H = 560, top = 10, bottom = 10;
-  const y = (r) => top + (hi - r) / (hi - lo) * (H - top - bottom);
-  const bandX = 36, bandW = 22;
-
+export function ruler({ you, zone, items }) {
+  const all = items.map((i) => i.rating).concat([you, zone[0], zone[1]]);
+  const lo = Math.max(800, Math.floor((Math.min(...all) - 150) / 100) * 100);
+  const hi = Math.min(3600, Math.ceil((Math.max(...all) + 150) / 100) * 100);
+  const W = 1000, H = 132, base = 92;
+  const x = (r) => 10 + (r - lo) / (hi - lo) * (W - 20);
   const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
-    "aria-label": `Rating ladder from ${lo} to ${hi}. Your practice rating is ${you}. ` +
-      items.map((i) => `${i.problem_id} at ${i.rating}`).join(", ") });
-
-  for (const b of RANK_BANDS) {
-    const a = Math.max(b.lo, lo), z = Math.min(b.hi, hi);
-    if (a >= z) continue;
-    svg.append(s("rect", { x: bandX, y: y(z), width: bandW, height: y(a) - y(z), fill: `var(--r-${b.key})` },
-      s("title", null, `${b.name}: ${b.lo}–${b.hi - 1}`)));
+    "aria-label": `Ratings from ${lo} to ${hi}. You: ${you}. Stretch zone ${zone[0]} to ${zone[1]}. ` +
+      items.map((i) => `${i.letter} at ${i.rating}`).join(", ") });
+  svg.append(s("rect", { x: x(zone[0]), y: base - 64, width: Math.max(4, x(zone[1]) - x(zone[0])), height: 64,
+    fill: "var(--blue)", opacity: 0.14 }, s("title", null, `Stretch zone ${zone[0]}–${zone[1]}`)));
+  svg.append(s("line", { x1: 0, x2: W, y1: base, y2: base, stroke: "var(--ink)", "stroke-width": 3 }));
+  const step = hi - lo > 1400 ? 200 : 100;
+  for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+    svg.append(s("line", { x1: x(t), x2: x(t), y1: base, y2: base + 10, stroke: "var(--ink)", "stroke-width": 2 }));
+    svg.append(s("text", { class: "tick", x: x(t), y: base + 30, "text-anchor": "middle", "font-size": 18 }, t));
   }
-  for (const t of niceTicks(lo, hi, 200)) {
-    svg.append(s("text", { class: "tick", x: bandX - 6, y: y(t) + 4, "text-anchor": "end" }, t));
-    svg.append(s("line", { x1: bandX - 3, x2: bandX, y1: y(t), y2: y(t), stroke: "var(--graphite)" }));
+  // letters stack upward when they share a rating
+  const used = new Map();
+  for (const it of items) {
+    const key = Math.round(x(it.rating) / 34);
+    const level = used.get(key) || 0;
+    used.set(key, level + 1);
+    svg.append(s("text", { x: x(it.rating), y: base - 8 - level * 34, "text-anchor": "middle", "font-size": 38 }, it.letter,
+      s("title", null, `${it.letter}: ${it.problem_id}, rated ${it.rating}`)));
   }
-
-  const [zLo, zHi] = zone;  // from the model: where an unfamiliar problem scores 50–70%
-  const pat = s("pattern", { id: "zone-hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
-    s("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: "var(--ink)", "stroke-width": 1.5, opacity: 0.35 }));
-  svg.append(s("defs", null, pat));
-  svg.append(s("rect", { x: bandX + bandW, y: y(zHi), width: W - bandX - bandW, height: y(zLo) - y(zHi), fill: "url(#zone-hatch)" },
-    s("title", null, `Stretch zone: ${zLo}–${zHi}`)));
-
-  svg.append(s("line", { x1: bandX - 4, x2: W, y1: y(you), y2: y(you), stroke: "var(--ink)", "stroke-width": 2 }));
-  svg.append(s("text", { class: "you", x: W, y: y(you) - 6, "text-anchor": "end" }, `You ${you}`));
-
-  // Pins, nudged apart so labels never overlap.
-  const sorted = [...items].sort((a, b) => b.rating - a.rating);
-  let lastY = -Infinity;
-  const pins = [];
-  for (const it of sorted) {
-    let py = y(it.rating);
-    if (py - lastY < 22) py = lastY + 22;
-    lastY = py;
-    const g = s("g", { class: "pin", tabindex: "-1", "data-pid": it.problem_id,
-      style: `transform: translateY(${H - py + 20}px)` });
-    g.append(
-      s("line", { x1: bandX + bandW, x2: 70, y1: y(it.rating), y2: py, stroke: "var(--ink)", "stroke-width": 1.5 }),
-      s("rect", { x: 70, y: py - 10, width: 66, height: 20, rx: 2, fill: fillVar(it.rating), stroke: "var(--ink)", "stroke-width": 1.5 }),
-      s("circle", { cx: 78, cy: py, r: 2.5, fill: "var(--paper)", stroke: "var(--ink)" }),
-      s("text", { class: "pin-label", x: 84, y: py + 4, style: `fill:${needsDarkText(it.rating) ? "#16233F" : "#fff"}` }, it.problem_id),
-      s("title", null, `${it.problem_id}, rated ${it.rating} (${rankOf(it.rating).name})`),
-    );
-    if (onPin) g.addEventListener("click", () => onPin(it.problem_id));
-    pins.push(g);
-    svg.append(g);
-  }
-  // One orchestrated moment: pins rise into place.
-  setTimeout(() => pins.forEach((p, i) => {
-    p.style.transitionDelay = `${i * 70}ms`;
-    p.style.transform = "translateY(0)";
-  }), 30);
-
-  return h("figure", { class: "ladder" }, svg,
-    h("figcaption", null, `Hatched: problems rated ${zone[0]}–${zone[1]} give you roughly a 50–70% chance.`));
+  svg.append(s("line", { x1: x(you), x2: x(you), y1: base - 74, y2: base + 12, stroke: "var(--blue)", "stroke-width": 4 }));
+  svg.append(s("text", { x: x(you) + 8, y: base - 60, "font-size": 18, style: "fill: var(--blue-ink)" }, `You ${you}`));
+  return h("figure", { class: "ruler" }, svg,
+    h("figcaption", null, `Shaded: problems rated ${zone[0]}–${zone[1]} give you about a 50–70% chance.`));
 }
 
 // ---------------------------------------------------------------- line chart
@@ -100,7 +68,7 @@ export function lineChart({ series, title, caption, bands = true, height = 280, 
       const a = Math.max(b.lo, y0), z = Math.min(b.hi, y1);
       if (a >= z) continue;
       svg.append(s("rect", { x: m.l, y: Y(z), width: W - m.l - m.r, height: Y(a) - Y(z),
-        fill: `var(--r-${b.key})`, opacity: 0.13 }, s("title", null, b.name)));
+        fill: `var(--r-${b.key})`, opacity: 0.06 }, s("title", null, b.name)));
     }
   }
   const step = (y1 - y0) > 1200 ? 400 : (y1 - y0) > 500 ? 200 : 100;
@@ -120,11 +88,11 @@ export function lineChart({ series, title, caption, bands = true, height = 280, 
 
   series.forEach((ser) => {
     const d = ser.points.map((p, i) => `${i ? "L" : "M"}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join("");
-    svg.append(s("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 2,
-      "stroke-dasharray": ser.dashed ? "6 4" : null, "stroke-linejoin": "round" }));
+    svg.append(s("path", { d, fill: "none", stroke: ser.dashed ? "var(--faint)" : "var(--ink)", "stroke-width": ser.dashed ? 1.5 : 2,
+      "stroke-dasharray": ser.dashed ? "6 5" : null, "stroke-linejoin": "round" }));
     if (!ser.dashed && ser.points.length < 400) {
       for (const p of ser.points) {
-        svg.append(s("circle", { cx: X(p.x), cy: Y(p.y), r: 3, fill: fillVar(p.y), stroke: "var(--ink)", "stroke-width": 1 },
+        svg.append(s("circle", { cx: X(p.x), cy: Y(p.y), r: 2.5, fill: "var(--ink)", stroke: "none" },
           s("title", null, `${p.label ? p.label + ": " : ""}${p.y} ${yUnit} on ${fmtDate(p.x)}`)));
       }
     }
@@ -132,7 +100,7 @@ export function lineChart({ series, title, caption, bands = true, height = 280, 
 
   const legend = series.length > 1
     ? h("ul", { class: "legend" }, series.map((ser) => h("li", null,
-        h("span", { class: ser.dashed ? "swatch swatch-dash" : "swatch", style: ser.dashed ? null : { background: "var(--ink)" } }), ser.name)))
+        h("span", { class: "swatch", style: { background: ser.dashed ? "var(--faint)" : "var(--ink)", height: "2px" } }), ser.dashed ? `${ser.name} (dashed)` : ser.name)))
     : null;
   return h("figure", { class: "chart" }, svg,
     h("figcaption", null, h("span", null, caption)),
@@ -204,22 +172,22 @@ export function calibration(bins, caption) {
     axis.append(s("text", { x: P(t), y: S - m + 16, "text-anchor": "middle", "font-size": 10 }, `${t * 100}%`));
   }
   svg.append(axis);
-  svg.append(s("rect", { x: P(0.5), y: S - P(0.7), width: P(0.7) - P(0.5), height: P(0.7) - P(0.5), fill: "var(--highlighter)", opacity: 0.6 },
+  svg.append(s("rect", { x: P(0.5), y: S - P(0.7), width: P(0.7) - P(0.5), height: P(0.7) - P(0.5), fill: "var(--blue)", opacity: 0.15 },
     s("title", null, "Target zone 50–70%")));
   svg.append(s("line", { x1: P(0), y1: S - P(0), x2: P(1), y2: S - P(1), stroke: "var(--graphite)", "stroke-dasharray": "4 4" }));
   const maxN = Math.max(...bins.map((b) => b.count));
   const pts = bins.map((b) => [P(b.mean_predicted), S - P(b.observed_rate)]);
-  svg.append(s("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${p[0]},${p[1]}`).join(""), fill: "none", stroke: "var(--ink)", "stroke-width": 2 }));
+  svg.append(s("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${p[0]},${p[1]}`).join(""), fill: "none", stroke: "var(--ink)", "stroke-width": 3 }));
   bins.forEach((b, i) => svg.append(s("circle", { cx: pts[i][0], cy: pts[i][1], r: 3 + 6 * Math.sqrt(b.count / maxN),
-    fill: "var(--sheet)", stroke: "var(--ink)", "stroke-width": 2 },
+    fill: "var(--paper)", stroke: "var(--ink)", "stroke-width": 2.5 },
     s("title", null, `Predicted ${Math.round(b.mean_predicted * 100)}%, observed ${Math.round(b.observed_rate * 100)}% (${b.count} attempts)`))));
   svg.append(s("text", { x: S / 2, y: S - 2, "text-anchor": "middle", "font-size": 11 }, "Predicted chance"));
   svg.append(s("text", { x: 10, y: S / 2, "text-anchor": "middle", "font-size": 11, transform: `rotate(-90 10 ${S / 2})` }, "Actually solved"));
   return h("figure", { class: "chart", style: { maxWidth: "380px" } }, svg,
     h("figcaption", null, h("span", null, caption)),
     h("ul", { class: "legend" },
-      h("li", null, h("span", { class: "swatch swatch-dash" }), "Perfect calibration"),
-      h("li", null, h("span", { class: "swatch", style: { background: "var(--highlighter)" } }), "50–70% target zone"),
+      h("li", null, h("span", { class: "swatch", style: { height: "2px", background: "var(--muted)" } }), "Perfect calibration (dashed)"),
+      h("li", null, h("span", { class: "swatch", style: { background: "var(--blue)", opacity: 0.3 } }), "50–70% target zone"),
       h("li", null, "Circle size: number of attempts")),
     dataTable("Calibration on held-out attempts", ["Predicted bin", "Mean predicted", "Observed", "Attempts"],
       bins.map((b) => [`${b.low * 100}–${b.high * 100}%`, `${Math.round(b.mean_predicted * 100)}%`, `${Math.round(b.observed_rate * 100)}%`, b.count])));

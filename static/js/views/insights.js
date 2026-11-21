@@ -20,7 +20,7 @@ function topicBars(topics, overall, onPick) {
         onclick: () => onPick(t.tag) },
       h("span", { class: "topic-name" }, t.focus ? h("mark", null, t.tag) : t.tag),
       h("span", { class: "topic-track", "aria-hidden": "true" },
-        h("span", { class: "topic-bar", "data-confidence": t.confidence, style: { width: w(t.rating), "--band": fillVar(t.rating) } }),
+        h("span", { class: "topic-bar", "data-confidence": t.confidence, "data-focus": t.focus || null, style: { width: w(t.rating) } }),
         h("span", { class: "topic-overall", style: { left: w(overall) } })),
       h("span", { class: "topic-num", "aria-hidden": "true" }, h("b", null, t.rating), h("span", null, `${t.attempts} attempts`)));
     list.append(h("li", null, btn));
@@ -40,9 +40,9 @@ function topicBars(topics, overall, onPick) {
     : null;
   return h("div", null, list, more,
     h("ul", { class: "legend" },
-      h("li", null, h("span", { class: "swatch", style: { background: "var(--r-expert)" } }), "Bar colour: rank of that rating"),
-      h("li", null, h("span", { class: "swatch swatch-hatch" }), "Hatched: fewer than 5 attempts"),
-      h("li", null, h("span", { class: "swatch swatch-dash" }), `Dashed line: overall ${overall}`)),
+      h("li", null, h("span", { class: "swatch", style: { background: "var(--blue)" } }), "Focus topic"),
+      h("li", null, h("span", { class: "swatch swatch-hatch" }), "Fewer than 5 attempts"),
+      h("li", null, h("span", { class: "swatch swatch-dash" }), `Overall rating ${overall}`)),
     dataTable("Topic ratings", ["Topic", "Rating", "Rank", "Attempts", "Solved", "Evidence"],
       topics.map((t) => [t.tag, t.rating, t.rank, t.attempts, pct(t.solve_rate || 0), t.confidence])));
 }
@@ -66,17 +66,17 @@ async function renderInspect(box, ctx, topics, onFocusChange) {
   const from = hist.length ? hist[0].at : 0;
   box.replaceChildren(h("div", { class: "inspect" },
     h("h3", null, t.tag,
-      h("button", { class: isFocus ? "btn btn-small" : "btn btn-mark btn-small", type: "button", onclick: toggle },
-        isFocus ? "Remove from training focus" : "Make it a training focus")),
+      h("button", { class: isFocus ? "btn btn-small" : "btn btn-ink btn-small", type: "button", onclick: toggle },
+        isFocus ? "Remove focus" : "Focus on this")),
     h("dl", { class: "facts" },
       h("div", null, h("dt", null, "Rating"), h("dd", { class: `rk-${rankOf(t.rating).key}` }, t.rating)),
-      h("div", null, h("dt", null, "Compared with overall"), h("dd", null, `${t.relative >= 0 ? "+" : ""}${t.relative}`)),
+      h("div", null, h("dt", null, "vs overall"), h("dd", null, `${t.relative >= 0 ? "+" : ""}${t.relative}`)),
       h("div", null, h("dt", null, "Attempts"), h("dd", null, t.attempts)),
       h("div", null, h("dt", null, "Solved within 24 h"), h("dd", null, pct(t.solve_rate || 0))),
       h("div", null, h("dt", null, "Hardest solved"), h("dd", null, t.hardest_solved ?? "none"))),
     lineChart({
       title: `${t.tag} rating over time`,
-      caption: `${t.tag} topic rating (solid) against your overall practice rating (dashed), one point per active day.`,
+      caption: `${t.tag} rating, one point per day you practised, against your overall rating.`,
       series: [
         { name: `${t.tag}`, points: hist.map((p) => ({ x: p.at, y: p.rating })) },
         { name: "Overall", dashed: true, points: overall.filter((p) => p.at >= from).map((p) => ({ x: p.at, y: p.rating })) },
@@ -84,7 +84,7 @@ async function renderInspect(box, ctx, topics, onFocusChange) {
       height: 220,
       tableRows: { headers: ["Date", "Rating"], rows: hist.map((p) => [fmtDate(p.at), p.rating]) },
     }),
-    h("h4", null, "Recent attempts"),
+    h("h4", { style: { marginTop: "28px", color: "var(--muted)", fontWeight: 500 } }, "Recent attempts"),
     h("ul", { class: "attempt-list" }, attempts.map((a) => h("li", null,
       h("span", { class: a.ever_solved ? "mark-ok" : "mark-no" }, a.ever_solved ? "✓" : "✗",
         h("span", { class: "visually-hidden" }, a.ever_solved ? " solved" : " not solved")),
@@ -95,7 +95,7 @@ async function renderInspect(box, ctx, topics, onFocusChange) {
 
 function modelPanel(model, feedback) {
   const panel = h("section", { class: "panel span-all", "aria-labelledby": "h-model" },
-    h("h2", { id: "h-model" }, "How reliable are the estimates?"));
+    h("h2", { id: "h-model" }, "How accurate are the chances?"));
   if (model.source !== "model") {
     panel.append(h("p", null, "No trained model is loaded, so chances come from Elo ratings alone. Run scripts/train_model.py to train one."));
     return panel;
@@ -166,12 +166,10 @@ export async function renderInsights(view, ctx) {
       : h("p", { class: "empty" }, "No rated contests yet."));
 
   view.replaceChildren(
-    h("div", { class: "view-head" }, h("div", null,
-      h("h2", null, "Where you're strong"),
-      h("p", null, "Each topic has its own Elo-style rating, built from every rated problem you've attempted. Select a topic to inspect it."))),
+    h("div", { class: "view-head" }, h("p", { class: "lead" }, "A rating for each topic. Select one to see how it changed.")),
     h("div", { class: "grid-2" },
       h("section", { class: "panel", "aria-labelledby": "h-topics" },
-        h("h2", { id: "h-topics" }, "Topic strengths"),
+        h("h2", { id: "h-topics" }, "Topics"),
         topicBars(topics, overall, pick)),
       h("section", { class: "panel", "aria-label": "Selected topic" }, inspectBox),
       ratingPanel,

@@ -1,70 +1,53 @@
 import { api } from "../api.js";
-import { h, s, RANKS, rankClass } from "../ui.js";
+import { h, rankClass } from "../ui.js";
 
-const EXAMPLE = { handle: "tourist" };
+const EXAMPLE = "tourist";
 
-function ladderStrip() {
-  // The full Codeforces rank ladder, 800 to 3600, drawn to scale.
-  const lo = 800, hi = 3600, W = 1000, H = 120, bandY = 40, bandH = 36;
-  const x = (r) => (r - lo) / (hi - lo) * W;
-  const svg = s("svg", { viewBox: `0 -4 ${W} ${H}`, role: "img",
-    "aria-label": "The Codeforces rating ladder from 800 to 3600, coloured by rank." });
-  // Ranks that share a colour are drawn as one band with a short name.
-  const SHORT = { newbie: "Newbie", pupil: "Pupil", specialist: "Specialist", expert: "Expert",
-    cm: "CM", master: "Master", gm: "Grandmaster" };
-  const groups = [];
-  RANKS.forEach((r, i) => {
-    const z = (RANKS[i + 1] || { lo: hi }).lo;
-    const last = groups[groups.length - 1];
-    if (last && last.key === r.key) { last.hi = z; last.names.push(r.name); }
-    else groups.push({ key: r.key, lo: r.lo, hi: z, names: [r.name] });
-  });
-  for (const g of groups) {
-    const a = Math.max(g.lo, lo), z = Math.min(g.hi, hi);
-    if (a >= z) continue;
-    svg.append(s("rect", { x: x(a), y: bandY, width: x(z) - x(a), height: bandH, fill: `var(--r-${g.key})` },
-      s("title", null, `${g.names.join(", ")}: ${g.lo}–${g.hi - 1}`)));
-    svg.append(s("text", { x: x(a) + 4, y: bandY - 10, "font-size": 14, fill: "var(--ink)", "font-weight": 600 }, SHORT[g.key]));
-  }
-  for (let t = 800; t <= 3600; t += 400)
-    svg.append(s("text", { x: x(t), y: bandY + bandH + 22, "font-size": 14, fill: "var(--graphite)",
-      "text-anchor": t === 800 ? "start" : t === 3600 ? "end" : "middle" }, t));
-  return h("figure", { class: "ladder-strip" }, svg,
-    h("figcaption", null, "The Codeforces rank ladder. Upsolve pins each day's problems on it, a step above where you're comfortable."));
-}
+// What a day's list looks like, for a solver around 1500.
+const SAMPLE = [
+  { name: "Maximum Median", id: "1201C", rating: 1400, tags: "binary search, greedy", chance: 68 },
+  { name: "Special Permutation", id: "1352G", rating: 1600, tags: "constructive algorithms", chance: 62 },
+  { name: "Spy-string", id: "1360F", rating: 1700, tags: "brute force, strings", chance: 55 },
+];
 
 export async function renderLanding(main, { go }) {
-  const input = h("input", { name: "handle", "aria-label": "Codeforces handle", placeholder: "your handle",
+  const input = h("input", { name: "handle", "aria-label": "Codeforces handle", placeholder: "Codeforces handle",
     autocomplete: "off", spellcheck: "false", required: true, pattern: "[A-Za-z0-9_.\\-]{3,24}" });
   const recent = h("div", { class: "recent" });
 
   main.replaceChildren(
     h("section", { class: "landing" },
-      h("h1", null, "Practise the problems you can almost solve."),
+      h("h1", null, "Practice problems that fit you."),
       h("p", { class: "lede" },
-        "Upsolve reads your public Codeforces history, rates you topic by topic, and picks problems you have about a 50–70% chance of solving. Hard enough to teach you something, but still within reach."),
+        "Upsolve looks at your Codeforces history and picks unsolved problems you have about a 60% chance of solving. Not too easy, not hopeless."),
       h("form", { class: "landing-form", onsubmit: (e) => { e.preventDefault(); go(input.value.trim()); } },
-        input, h("button", { class: "btn btn-ink", type: "submit" }, "Start practising")),
-      h("p", { class: "hint" }, "No account needed. Try ",
-        h("a", { href: `/u/${EXAMPLE.handle}`, onclick: (e) => { e.preventDefault(); go(EXAMPLE.handle); } }, EXAMPLE.handle),
-        " to see how it works."),
-      ladderStrip(),
+        input, h("button", { class: "btn btn-ink", type: "submit" }, "Continue")),
+      h("p", { class: "hint" }, "No account needed. Or try ",
+        h("a", { href: `/u/${EXAMPLE}`, onclick: (e) => { e.preventDefault(); go(EXAMPLE); } }, EXAMPLE), "."),
+
+      h("section", { class: "sample", "aria-labelledby": "h-sample" },
+        h("h2", { id: "h-sample" }, "Example"),
+        h("ul", { class: "list" }, SAMPLE.map((p) => h("li", { class: "item" },
+          h("div", { class: "item-top" }, h("span", { class: "item-title" }, p.name), h("span", { class: "item-chance" }, `${p.chance}%`)),
+          h("div", { class: "item-meta" }, h("span", null, p.id), h("span", null, p.rating), h("span", null, p.tags)))))),
+
       recent,
-      h("section", { class: "how", "aria-label": "How Upsolve works" },
-        h("div", null, h("h3", null, "Reads your history"),
-          h("p", null, "Every submission is grouped into one attempt per problem. An attempt counts as solved if it was accepted within 24 hours. Compilation errors don't count against you.")),
-        h("div", null, h("h3", null, "Rates each topic"),
-          h("p", null, "An Elo-style rating per tag (dp, graphs, greedy and so on) moves up when you beat a problem and down when one beats you.")),
-        h("div", null, h("h3", null, "Estimates your chances"),
-          h("p", null, "A logistic-regression model trained on 200 public histories turns those ratings into a solve probability for every unsolved problem.")))));
+
+      h("section", { class: "facts-row", "aria-label": "How it works" },
+        h("div", null, h("h3", null, "Your history"),
+          h("p", null, "Every problem you've submitted to, grouped into attempts. Accepted within a day counts as solved.")),
+        h("div", null, h("h3", null, "A rating per topic"),
+          h("p", null, "dp, graphs, greedy and the rest each get their own rating, so weak spots show up.")),
+        h("div", null, h("h3", null, "A chance for every problem"),
+          h("p", null, "A model trained on 200 public histories estimates how likely you are to solve each one.")))));
 
   try {
     const users = await api.users();
     if (users.length) {
-      recent.append(h("h2", null, "Recently synced"),
+      recent.append(h("h2", null, "Recently opened"),
         h("ul", null, users.slice(0, 12).map((u) => h("li", null,
           h("a", { class: rankClass(u.rating), href: `/u/${encodeURIComponent(u.handle)}`,
             onclick: (e) => { e.preventDefault(); go(u.handle); } }, u.handle)))));
     }
-  } catch { /* the list is optional */ }
+  } catch { /* optional */ }
 }
