@@ -1,0 +1,2387 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Upsolve API",
+    "description": "\nUpsolve recommends Codeforces practice problems from a user's own submission history.\n\n**Workflow:** `POST /api/v1/users/{handle}/sync` starts an import, poll\n`GET /api/v1/users/{handle}/sync` until `status` is `done`, then read insights and\nrecommendations. All other user endpoints return **404** until the handle is synced.\n\n**Plugins** run inside the Upsolve web app. They call this API through the plugin host\nand can save their own data with the `/plugins/{plugin_id}/store` endpoints.\nSee `docs/PLUGINS.md`.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/users/{handle}/sync": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Start importing a handle",
+        "description": "Queues an incremental import: profile, new submissions, rating history and problem\nmetadata (cached for 24 h). Requests to Codeforces are paced at one per ~2 s, so a first\nimport of a large history can take a minute. If a sync is already running it is returned.",
+        "operationId": "start_sync_api_v1_users__handle__sync_post",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncJob"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Latest sync status",
+        "operationId": "sync_status_api_v1_users__handle__sync_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncJob"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "List synced handles",
+        "operationId": "list_users_api_v1_users_get",
+        "parameters": [
+          {
+            "name": "include_dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Dataset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response List Users Api V1 Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/profile": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Get Profile",
+        "operationId": "get_profile_api_v1_users__handle__profile_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/topics": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Topic strengths with evidence counts",
+        "operationId": "get_topics_api_v1_users__handle__topics_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Topic"
+                  },
+                  "title": "Response Get Topics Api V1 Users  Handle  Topics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/topics/{tag}/history": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Daily topic rating trend",
+        "description": "Use the tag `__overall__` for the overall practice rating.",
+        "operationId": "get_topic_history_api_v1_users__handle__topics__tag__history_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryPoint"
+                  },
+                  "title": "Response Get Topic History Api V1 Users  Handle  Topics  Tag  History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/rating-history": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Official contest rating history",
+        "operationId": "get_rating_history_api_v1_users__handle__rating_history_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RatingChange"
+                  },
+                  "title": "Response Get Rating History Api V1 Users  Handle  Rating History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/activity": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Submissions per day",
+        "operationId": "get_activity_api_v1_users__handle__activity_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 730,
+              "minimum": 7,
+              "default": 365,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityDay"
+                  },
+                  "title": "Response Get Activity Api V1 Users  Handle  Activity Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/attempts": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "summary": "Recent attempts (grouped submissions)",
+        "operationId": "get_attempts_api_v1_users__handle__attempts_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Attempts Api V1 Users  Handle  Attempts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/recommendations": {
+      "get": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "Daily problem recommendations",
+        "description": "Problems targeting a 50\u201370% estimated solve probability, ranked by training focus,\nweak topics, upsolve opportunities and recency. The list is stable for a day; pass a\ndifferent `refresh` number for a new set.",
+        "operationId": "get_recommendations_api_v1_users__handle__recommendations_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 5,
+              "title": "Count"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Topic"
+            }
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Refresh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recommendations"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/predict/{problem_id}": {
+      "get": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "Estimate the chance of solving one problem",
+        "operationId": "get_prediction_api_v1_users__handle__predict__problem_id__get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          },
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "examples": [
+                "1520A"
+              ],
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prediction"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/feedback": {
+      "get": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "How past recommendations turned out",
+        "operationId": "get_feedback_api_v1_users__handle__feedback_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Feedback"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/training": {
+      "get": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "Get Training",
+        "operationId": "get_training_api_v1_users__handle__training_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "Set up to two training topics and a weekly solve target",
+        "operationId": "put_training_api_v1_users__handle__training_put",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainingSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{handle}/plan": {
+      "get": {
+        "tags": [
+          "coach"
+        ],
+        "summary": "This week's training plan",
+        "operationId": "get_plan_api_v1_users__handle__plan_get",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{3,24}$",
+              "description": "Codeforces handle (case-insensitive)",
+              "examples": [
+                "tourist"
+              ],
+              "title": "Handle"
+            },
+            "description": "Codeforces handle (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/topics": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "All topic tags with problem counts",
+        "operationId": "list_topics_api_v1_topics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Topics Api V1 Topics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/problems": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Search the problem set",
+        "operationId": "list_problems_api_v1_problems_get",
+        "parameters": [
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
+            }
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 800,
+              "title": "Min Rating"
+            }
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 3500,
+              "title": "Max Rating"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response List Problems Api V1 Problems Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/model": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Model report: evaluation metrics and calibration",
+        "operationId": "model_report_api_v1_model_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Model Report Api V1 Model Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plugins": {
+      "get": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "Installed plugins",
+        "operationId": "list_plugins_api_v1_plugins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PluginInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Plugins Api V1 Plugins Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plugins/{plugin_id}": {
+      "put": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "Turn a plugin on or off",
+        "operationId": "toggle_plugin_api_v1_plugins__plugin_id__put",
+        "parameters": [
+          {
+            "name": "plugin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,39}$",
+              "examples": [
+                "rival"
+              ],
+              "title": "Plugin Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PluginToggle"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plugins/{plugin_id}/store/{scope}": {
+      "get": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "All stored values",
+        "operationId": "store_list_api_v1_plugins__plugin_id__store__scope__get",
+        "parameters": [
+          {
+            "name": "plugin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,39}$",
+              "examples": [
+                "rival"
+              ],
+              "title": "Plugin Id"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(_global|[A-Za-z0-9_.\\-]{3,24})$",
+              "description": "A handle, or `_global` for data not tied to a user",
+              "title": "Scope"
+            },
+            "description": "A handle, or `_global` for data not tied to a user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Store List Api V1 Plugins  Plugin Id  Store  Scope  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plugins/{plugin_id}/store/{scope}/{key}": {
+      "get": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "Store Get",
+        "operationId": "store_get_api_v1_plugins__plugin_id__store__scope___key__get",
+        "parameters": [
+          {
+            "name": "plugin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,39}$",
+              "examples": [
+                "rival"
+              ],
+              "title": "Plugin Id"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(_global|[A-Za-z0-9_.\\-]{3,24})$",
+              "description": "A handle, or `_global` for data not tied to a user",
+              "title": "Scope"
+            },
+            "description": "A handle, or `_global` for data not tied to a user"
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreItem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "Store Put",
+        "operationId": "store_put_api_v1_plugins__plugin_id__store__scope___key__put",
+        "parameters": [
+          {
+            "name": "plugin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,39}$",
+              "examples": [
+                "rival"
+              ],
+              "title": "Plugin Id"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(_global|[A-Za-z0-9_.\\-]{3,24})$",
+              "description": "A handle, or `_global` for data not tied to a user",
+              "title": "Scope"
+            },
+            "description": "A handle, or `_global` for data not tied to a user"
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreItem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "plugins"
+        ],
+        "summary": "Store Delete",
+        "operationId": "store_delete_api_v1_plugins__plugin_id__store__scope___key__delete",
+        "parameters": [
+          {
+            "name": "plugin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,39}$",
+              "examples": [
+                "rival"
+              ],
+              "title": "Plugin Id"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(_global|[A-Za-z0-9_.\\-]{3,24})$",
+              "description": "A handle, or `_global` for data not tied to a user",
+              "title": "Scope"
+            },
+            "description": "A handle, or `_global` for data not tied to a user"
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.\\-]{1,64}$",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivityDay": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "title": "Day"
+          },
+          "submissions": {
+            "type": "integer",
+            "title": "Submissions"
+          },
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "submissions",
+          "accepted"
+        ],
+        "title": "ActivityDay"
+      },
+      "Feedback": {
+        "properties": {
+          "shown": {
+            "type": "integer",
+            "title": "Shown"
+          },
+          "attempted": {
+            "type": "integer",
+            "title": "Attempted"
+          },
+          "solved": {
+            "type": "integer",
+            "title": "Solved"
+          },
+          "mean_predicted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Predicted"
+          },
+          "observed_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shown",
+          "attempted",
+          "solved",
+          "mean_predicted",
+          "observed_rate"
+        ],
+        "title": "Feedback"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistoryPoint": {
+        "properties": {
+          "at": {
+            "type": "integer",
+            "title": "At"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "rating"
+        ],
+        "title": "HistoryPoint"
+      },
+      "Plan": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "week_start": {
+            "type": "string",
+            "title": "Week Start"
+          },
+          "focus": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus"
+          },
+          "weekly_target": {
+            "type": "integer",
+            "title": "Weekly Target"
+          },
+          "progress": {
+            "type": "integer",
+            "title": "Progress"
+          },
+          "days": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "week_start",
+          "focus",
+          "weekly_target",
+          "progress",
+          "days"
+        ],
+        "title": "Plan"
+      },
+      "PluginInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "default": ""
+          },
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Slots",
+            "default": []
+          },
+          "entry_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Url"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "default": []
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "version",
+          "valid",
+          "enabled"
+        ],
+        "title": "PluginInfo"
+      },
+      "PluginToggle": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "PluginToggle"
+      },
+      "Prediction": {
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "title": "Problem Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "probability": {
+            "type": "number",
+            "title": "Probability"
+          },
+          "elo_probability": {
+            "type": "number",
+            "title": "Elo Probability"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "model",
+              "elo"
+            ],
+            "title": "Source"
+          },
+          "contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Contributions",
+            "description": "Per-feature contribution to the log-odds"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/Reason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_id",
+          "name",
+          "rating",
+          "tags",
+          "probability",
+          "elo_probability",
+          "source",
+          "contributions",
+          "reasons"
+        ],
+        "title": "Prediction"
+      },
+      "Profile": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Official Codeforces contest rating"
+          },
+          "max_rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Rating"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "max_rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Rank"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "practice_rating": {
+            "type": "integer",
+            "title": "Practice Rating",
+            "description": "Upsolve's overall Elo practice rating"
+          },
+          "practice_rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Practice Rank"
+          },
+          "submissions": {
+            "type": "integer",
+            "title": "Submissions"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts",
+            "description": "Distinct problems attempted (submissions grouped per problem)"
+          },
+          "problems_solved": {
+            "type": "integer",
+            "title": "Problems Solved"
+          },
+          "solved_within_24h": {
+            "type": "integer",
+            "title": "Solved Within 24H"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "model_source": {
+            "type": "string",
+            "enum": [
+              "model",
+              "elo"
+            ],
+            "title": "Model Source",
+            "description": "'model' when the trained classifier is loaded, else Elo fallback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "practice_rating",
+          "submissions",
+          "attempts",
+          "problems_solved",
+          "solved_within_24h",
+          "last_synced_at",
+          "model_source"
+        ],
+        "title": "Profile"
+      },
+      "RatingChange": {
+        "properties": {
+          "contest_id": {
+            "type": "integer",
+            "title": "Contest Id"
+          },
+          "contest_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contest Name"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "old_rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Rating"
+          },
+          "new_rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Rating"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contest_id",
+          "contest_name",
+          "rank",
+          "old_rating",
+          "new_rating",
+          "at"
+        ],
+        "title": "RatingChange"
+      },
+      "Reason": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "probability",
+              "difficulty",
+              "focus",
+              "weak",
+              "new",
+              "upsolve"
+            ],
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "Reason"
+      },
+      "Recommendation": {
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "title": "Problem Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "solved_count": {
+            "type": "integer",
+            "title": "Solved Count"
+          },
+          "probability": {
+            "type": "number",
+            "title": "Probability",
+            "description": "Estimated solve probability (an estimate, not a promise)"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/Reason"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "upsolve": {
+            "type": "boolean",
+            "title": "Upsolve",
+            "description": "True when the user tried this problem before without solving it"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_id",
+          "name",
+          "rating",
+          "rank",
+          "tags",
+          "url",
+          "solved_count",
+          "probability",
+          "reasons",
+          "upsolve"
+        ],
+        "title": "Recommendation"
+      },
+      "Recommendations": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "practice_rating": {
+            "type": "integer",
+            "title": "Practice Rating"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "model",
+              "elo"
+            ],
+            "title": "Source"
+          },
+          "target": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Target"
+          },
+          "stretch_zone": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Stretch Zone",
+            "description": "Problem ratings where the estimate is 50\u201370% for an unfamiliar topic"
+          },
+          "focus": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Recommendation"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "practice_rating",
+          "source",
+          "target",
+          "stretch_zone",
+          "focus",
+          "items"
+        ],
+        "title": "Recommendations"
+      },
+      "StoreItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "updated_at"
+        ],
+        "title": "StoreItem"
+      },
+      "StoreValue": {
+        "properties": {
+          "value": {
+            "title": "Value",
+            "description": "Any JSON value (max 256 KB)",
+            "examples": [
+              {
+                "rival": "jiangly"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "StoreValue"
+      },
+      "SyncJob": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "done",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage",
+            "description": "Current pipeline stage while running"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "new_submissions": {
+            "type": "integer",
+            "title": "New Submissions",
+            "default": 0
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "status"
+        ],
+        "title": "SyncJob"
+      },
+      "Topic": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "solved": {
+            "type": "integer",
+            "title": "Solved"
+          },
+          "solve_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solve Rate"
+          },
+          "relative": {
+            "type": "integer",
+            "title": "Relative",
+            "description": "Topic rating minus overall practice rating"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "description": "Evidence level: <5, <20, >=20 attempts"
+          },
+          "focus": {
+            "type": "boolean",
+            "title": "Focus"
+          },
+          "hardest_solved": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hardest Solved",
+            "description": "Highest-rated problem with this tag the user has solved"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "rating",
+          "rank",
+          "attempts",
+          "solved",
+          "solve_rate",
+          "relative",
+          "confidence",
+          "focus"
+        ],
+        "title": "Topic"
+      },
+      "TrainingOut": {
+        "properties": {
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "title": "Topics",
+            "examples": [
+              [
+                "dp",
+                "graphs"
+              ]
+            ]
+          },
+          "weekly_target": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Weekly Target",
+            "default": 5
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "title": "TrainingOut"
+      },
+      "TrainingSettings": {
+        "properties": {
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "title": "Topics",
+            "examples": [
+              [
+                "dp",
+                "graphs"
+              ]
+            ]
+          },
+          "weekly_target": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Weekly Target",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "title": "TrainingSettings"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "sync",
+      "description": "Import a handle from Codeforces (ETL)"
+    },
+    {
+      "name": "insights",
+      "description": "Profile, topic strengths, histories, activity"
+    },
+    {
+      "name": "coach",
+      "description": "Recommendations, predictions and training plans (adaptive core)"
+    },
+    {
+      "name": "catalog",
+      "description": "Problems, topics and the model report"
+    },
+    {
+      "name": "plugins",
+      "description": "Plugin registry and plugin data store"
+    }
+  ]
+}
