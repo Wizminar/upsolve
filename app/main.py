@@ -50,9 +50,9 @@ app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_meth
 
 @app.middleware("http")
 async def _revalidate_assets(request: Request, call_next):
-    """Ask browsers to revalidate app and plugin files so edits show up on reload."""
+    """Ask browsers to revalidate pages, app and plugin files so edits show up on reload."""
     response = await call_next(request)
-    if request.url.path.startswith(("/static/", "/plugin-files/")):
+    if not request.url.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-cache"
     return response
 

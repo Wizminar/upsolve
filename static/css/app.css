@@ -33,8 +33,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #151517; --ink: #F2F2F4; --muted: #A0A0A8; --faint: #76767E; --line: #2A2A2E; --wash: #1D1D20;
-    --blue: #8C9CFF; --blue-ink: #A3B0FF; --on-blue: #151517; --ok: #5CCB83; --bad: #FF8A80; --focus: #A3B0FF;
+    --paper: #0E0E10; --ink: #F2F2F4; --muted: #A0A0A8; --faint: #76767E; --line: #2A2A2E; --wash: #1D1D20;
+    --blue: #8C9CFF; --blue-ink: #A3B0FF; --on-blue: #0E0E10; --ok: #5CCB83; --bad: #FF8A80; --focus: #A3B0FF;
     --t-newbie: #C2C2CC; --t-pupil: #5CCB83; --t-specialist: #4FD9CF; --t-expert: #A3B0FF;
     --t-cm: #F08CF0; --t-master: #FFB45C; --t-gm: #FF8A80;
     --heat-0: #232327; --heat-1: #2E3770; --heat-2: #4253B0; --heat-3: #6E80F0; --heat-4: #B3BDFF;
@@ -42,8 +42,8 @@
   }
 }
 :root[data-theme="dark"] {
-  --paper: #151517; --ink: #F2F2F4; --muted: #A0A0A8; --faint: #76767E; --line: #2A2A2E; --wash: #1D1D20;
-  --blue: #8C9CFF; --blue-ink: #A3B0FF; --on-blue: #151517; --ok: #5CCB83; --bad: #FF8A80; --focus: #A3B0FF;
+  --paper: #0E0E10; --ink: #F2F2F4; --muted: #A0A0A8; --faint: #76767E; --line: #2A2A2E; --wash: #1D1D20;
+  --blue: #8C9CFF; --blue-ink: #A3B0FF; --on-blue: #0E0E10; --ok: #5CCB83; --bad: #FF8A80; --focus: #A3B0FF;
   --t-newbie: #C2C2CC; --t-pupil: #5CCB83; --t-specialist: #4FD9CF; --t-expert: #A3B0FF;
   --t-cm: #F08CF0; --t-master: #FFB45C; --t-gm: #FF8A80;
   --heat-0: #232327; --heat-1: #2E3770; --heat-2: #4253B0; --heat-3: #6E80F0; --heat-4: #B3BDFF;
@@ -53,7 +53,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+  margin: 0; min-height: 100vh; display: flex; flex-direction: column; position: relative; isolation: isolate;
   background: var(--paper); color: var(--ink);
   font: 400 16px/1.6 var(--font); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -76,9 +76,15 @@ p a, .hint a, .colophon a { text-decoration: underline; text-decoration-color: v
 /* ---------------------------------------------------------------- shell */
 
 .masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px var(--gutter); max-width: 1120px; width: 100%; margin: 0 auto; }
-.wordmark { font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1.25rem; letter-spacing: -0.02em; }
+.logo { width: 20px; height: 20px; flex: none; color: var(--blue-ink); }
+.theme-toggle { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
+.theme-toggle:hover { background: var(--wash); }
+.theme-toggle svg { width: 18px; height: 18px; }
+:root[data-theme="light"] .theme-toggle .sun { display: none; }
+:root:not([data-theme="light"]) .theme-toggle .moon { display: none; }
 .wordmark-mark { display: none; }
-.handle-form { display: flex; gap: 8px; flex: 0 1 280px; }
+.handle-form { display: flex; gap: 8px; flex: 0 1 280px; margin-left: auto; }
 .is-landing .handle-form { visibility: hidden; }
 .handle-form input, .landing-form input {
   flex: 1; min-width: 0; font: inherit; font-size: 0.9375rem; color: var(--ink); background: var(--wash);
@@ -315,4 +321,9 @@ details.table-toggle summary:hover { color: var(--ink); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Slow cross-fade when switching theme (only while switching, so normal use has no lag). */
+.theme-fading, .theme-fading *, .theme-fading *::before, .theme-fading *::after {
+  transition: background-color 600ms ease, color 600ms ease, border-color 600ms ease, fill 600ms ease, stroke 600ms ease !important;
 }

@@ -161,4 +161,21 @@ document.getElementById("handle-form").addEventListener("submit", (e) => {
 });
 window.addEventListener("popstate", route);
 
+const themeBtn = document.getElementById("theme-toggle");
+function syncThemeButton() {
+  if (!themeBtn) return;
+  const dark = document.documentElement.dataset.theme !== "light";
+  themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+}
+themeBtn?.addEventListener("click", () => {
+  const root = document.documentElement;
+  const next = root.dataset.theme === "light" ? "dark" : "light";
+  root.classList.add("theme-fading");
+  root.dataset.theme = next;
+  setTimeout(() => root.classList.remove("theme-fading"), 650);
+  try { localStorage.setItem("upsolve-theme", next); } catch { /* private mode: theme just won't persist */ }
+  syncThemeButton();
+});
+syncThemeButton();
+
 loadPlugins().finally(route);
