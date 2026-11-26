@@ -6,3 +6,10 @@ data/*.db-*
 .pytest_cache/
 .DS_Store
 data/*.log
+docs/deck/node_modules/
+docs/deck/stills/
+docs/deck/Upsolve.pptx
+docs/deck/Upsolve_Plugins.pptx
+docs/deck/Upsolve_demo.mp4
+~$*
+Codeforces_Practice_Coach_Proposal*.pdf

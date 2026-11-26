@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upsolve: Project Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 18mm 17mm 18mm 17mm; }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.55 "Hanken Grotesk", system-ui, sans-serif; color: #111; margin: 0; }
+  h1 { font-size: 26pt; line-height: 1.1; margin: 0 0 6pt; letter-spacing: -0.02em; }
+  h2 { font-size: 15pt; margin: 22pt 0 6pt; padding-top: 6pt; border-top: 1px solid #ddd; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14pt 0 4pt; break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 9pt; background: #f2f2f5; padding: 0 3px; border-radius: 3px; }
+  pre { font-family: ui-monospace, Menlo, monospace; font-size: 8.6pt; background: #f4f4f7; padding: 8pt 10pt; border-radius: 6px; white-space: pre-wrap; break-inside: avoid; margin: 0 0 9pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.5pt; break-inside: avoid; }
+  th, td { text-align: left; vertical-align: top; padding: 4pt 6pt 4pt 0; border-bottom: 1px solid #e6e6ea; }
+  th { font-weight: 600; color: #555; }
+  figure { margin: 6pt 0 12pt; break-inside: avoid; }
+  figure img { max-width: 100%; max-height: 112mm; width: auto; border: 1px solid #e3e3e8; border-radius: 6px; display: block; }
+  figcaption { font-size: 8.8pt; color: #666; margin-top: 4pt; }
+  .muted { color: #666; }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .mark { color: #2F49D1; font-size: 30pt; line-height: 1; }
+  .cover .sub { font-size: 13pt; color: #444; max-width: 140mm; }
+  .cover table { width: auto; }
+  .cover td { padding-right: 18pt; border: 0; }
+  .page { break-before: page; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+  .note { border-left: 3px solid #2F49D1; padding: 4pt 0 4pt 10pt; margin: 6pt 0 10pt; }
+  .kpi { display: flex; gap: 22pt; margin: 4pt 0 10pt; }
+  .kpi div b { display: block; font-size: 15pt; }
+  .kpi div span { font-size: 8.5pt; color: #666; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <div class="mark">&#8963;</div>
+    <h1 style="margin-top:14pt">Upsolve</h1>
+    <p class="sub">A Codeforces practice coach. Enter a public handle and Upsolve recommends unsolved problems you have about a 50&ndash;70% chance of solving, explains why, and tracks your progress by topic.</p>
+  </div>
+  <div>
+    <p><b>CS698B Course Project: Project Overview</b><br>
+    <span class="muted">Team: The Syndicate</span></p>
+    <table>
+      <tr><td>Ashirvad Dwivedi</td><td>265005</td></tr>
+      <tr><td>Mohit Shankar Pawar</td><td>265021</td></tr>
+      <tr><td>Chaitanya Kumar</td><td>265009</td></tr>
+      <tr><td>Bishal Podder</td><td>265008</td></tr>
+    </table>
+    <p style="margin-top:12pt">Live: <b>https://upsolve.mohitupawar.com</b> &nbsp;(also upsolve.wizminar.com)<br>
+    Code: <b>https://github.com/Wizminar/upsolve</b><br>
+    API docs: <b>https://upsolve.mohitupawar.com/api/docs</b></p>
+  </div>
+</section>
+
+<section class="page">
+<h2 style="border:0;margin-top:0">1. What Upsolve does</h2>
+<p>Competitive programmers waste time on problems that are either far too easy or hopelessly hard. Upsolve reads a user's public Codeforces history, works out how strong they are in each topic (dp, graphs, greedy and so on), and picks five unsolved problems per day that sit in their <i>stretch zone</i>: an estimated 50&ndash;70% chance of being solved. Each recommendation comes with written reasons.</p>
+<p>The app has three connected views:</p>
+<ul>
+  <li><b>Today</b>: five recommended problems with chance, rating, topics and an expandable explanation.</li>
+  <li><b>Insights</b>: topic ratings, topic history, contest rating, activity heatmap, and a report on how accurate the chances are.</li>
+  <li><b>Week</b>: a weekly plan built from up to two focus topics and a weekly solve target, with progress.</li>
+</ul>
+<p>A fourth area, <b>Plugins</b>, lets other teams add their own pages and panels inside Upsolve (see section 7).</p>
+
+<h2>2. How it fits together</h2>
+<pre>Codeforces API --&gt; ETL (clean, group, store) --&gt; SQLite database
+                                                   |
+                                                   v
+                            Elo ratings per topic + logistic regression model
+                                                   |
+                                                   v
+                         Recommender (five problems near a 60% chance, with reasons)
+                                                   |
+                           +-----------------------+------------------------+
+                           v                                                v
+             Website: Today, Insights, Week                 REST API + in-app plugin system</pre>
+<p>Everything runs as one Python process: <b>FastAPI</b> (web framework) served by <b>Uvicorn</b> (web server). It serves the website, answers API requests, and runs imports in background threads. Data lives in one <b>SQLite</b> file. The trained model is a small JSON file of weights.</p>
+
+<h3>Tech stack</h3>
+<table>
+  <tr><th>Layer</th><th>Tool</th><th>Why</th></tr>
+  <tr><td>Backend</td><td>Python 3.12, FastAPI, Uvicorn</td><td>Simple, typed endpoints; automatic OpenAPI docs</td></tr>
+  <tr><td>Storage</td><td>SQLite</td><td>One file, no database server needed</td></tr>
+  <tr><td>Machine learning</td><td>NumPy, scikit-learn</td><td>Train once offline; NumPy for fast predictions</td></tr>
+  <tr><td>Data source</td><td>Codeforces public API, via httpx</td><td>Free, no key; paced to 1 request / 2 s</td></tr>
+  <tr><td>Frontend</td><td>Plain HTML, CSS, JavaScript</td><td>No build step; hand-drawn SVG charts</td></tr>
+  <tr><td>Testing</td><td>pytest (28 tests)</td><td>Runs offline with synthetic data</td></tr>
+  <tr><td>Hosting</td><td>Render (free plan), custom domain</td><td>Public URL for the team and partner team</td></tr>
+</table>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">3. Data component (ETL)</h2>
+<h3>Extract</h3>
+<p>When a user presses Sync, the server calls four Codeforces endpoints: <code>user.info</code> (profile), <code>user.status</code> (every submission), <code>user.rating</code> (contest history) and <code>problemset.problems</code> (about 11,500 problems with difficulty and tags). Codeforces allows roughly one request every two seconds, so the client paces itself and retries on errors.</p>
+<h3>Transform</h3>
+<ul>
+  <li>Gym problems and the <code>*special</code> tag are dropped.</li>
+  <li>Duplicates are removed: submissions by id, and the same statement reused in Div. 1 and Div. 2 by name and rating.</li>
+  <li>Submissions are grouped into <b>attempts</b>, one per problem. An attempt starts at the first <i>eligible</i> submission and counts as <b>solved if accepted within 24 hours</b>.</li>
+  <li>Compilation errors and pending verdicts are ignored, so they never count as failures.</li>
+</ul>
+<h3>Load</h3>
+<p>Everything is stored in SQLite (problems, users, submissions, attempts, contest ratings, topic ratings, training settings, recommendation log, sync jobs, plugin data). Later syncs are <b>incremental</b>: only submissions newer than the last stored one are fetched, and problem metadata is cached for 24 hours.</p>
+<h3>Training dataset</h3>
+<p>A script sampled 200 real users from recent rated rounds, 20 per 200-point rating band from 800 to 2800, and imported their full histories. The list is published in <code>data/dataset_handles.csv</code> so the dataset can be rebuilt.</p>
+
+<h2>4. Adaptive component (AI/ML)</h2>
+<h3>Elo ratings per topic</h3>
+<p>Each attempt is treated like a chess game between the user and the problem, whose Codeforces difficulty is its rating. Solving raises the rating, failing lowers it. This runs for an overall rating and for every topic. Two corrections make it realistic:</p>
+<ul>
+  <li><b>Anchoring.</b> People mostly submit to problems they expect to solve, so plain Elo drifts far too high (one 1487-rated user came out at 2238). The overall rating is anchored to the user's contest rating at the time, plus a decaying "practice form" offset. Topic ratings are offsets from it, re-centred so they show relative strength.</li>
+  <li><b>Implicit failures.</b> In a rated contest the user saw every problem. Each problem they never attempted in that round is added as an unsolved game, which supplies the missing failures on hard problems.</li>
+</ul>
+<h3>Logistic regression</h3>
+<p>For any problem the classifier predicts the chance of solving it from 11 features measured <i>before</i> the attempt: the Elo estimate, the gap between difficulty and overall rating, the gap to the weakest tag, tag evidence and solve rates, recent form, total experience, days since last practice, number of tags, difficulty, and whether it was a contest. Predictions are made in "seen in a contest" mode, which is the conservative choice.</p>
+<h3>Evaluation</h3>
+<p>Chronological split: trained on the oldest 80% of examples (145,793), tested on the newest 20% (36,449) that the model never saw.</p>
+<div class="kpi">
+  <div><b>0.947</b><span>AUC (Elo alone: 0.907)</span></div>
+  <div><b>0.059</b><span>Brier score (Elo: 0.147)</span></div>
+  <div><b>0.216</b><span>Log loss (Elo: 0.488)</span></div>
+  <div><b>68%</b><span>solved, of test problems placed in 50&ndash;70%</span></div>
+</div>
+<p>If the model file is missing, the app falls back to Elo estimates automatically.</p>
+<h3>Recommender</h3>
+<p>Every unsolved problem near the user's level is scored by closeness to 60%, training focus, weak topics, "upsolve" (tried before and failed) and recency, with at most two per topic and one per contest. Each pick gets written reasons, for example "Rated 1900, 263 above your practice rating" or "Builds a weaker topic: graphs". Shown recommendations are logged, so later syncs can compare predicted chances with what the user actually solved.</p>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">5. Visualisation component</h2>
+<figure><img src="img/landing.png" alt="Landing page with handle input and example list"><figcaption>Landing page: enter any public Codeforces handle; no account needed.</figcaption></figure>
+<figure><img src="img/today.png" alt="Today view listing five recommended problems with chances"><figcaption>Today: five problems, easiest first, each with chance, rating and topics. "Why this problem" expands the reasons. Focus topics appear in blue.</figcaption></figure>
+</section>
+
+<section class="page">
+<figure><img src="img/insights.png" alt="Insights view with topic bars and topic history"><figcaption>Insights: one bar per topic (blue for focus topics, grey for fewer than 5 attempts, the thin line marks the overall rating). Selecting a topic shows its rating history, key facts and recent attempts.</figcaption></figure>
+<figure><img src="img/charts.png" alt="Contest rating chart and activity heatmap"><figcaption>Contest rating history over Codeforces rank bands, and a one-year activity heatmap.</figcaption></figure>
+</section>
+
+<section class="page">
+<figure><img src="img/model.png" alt="Calibration chart and model metrics"><figcaption>How accurate the chances are: calibration on held-out data. Points near the diagonal mean the predicted chances match reality.</figcaption></figure>
+<figure><img src="img/week.png" alt="Week plan with progress bar and settings"><figcaption>Week: a plan that starts near 70% early in the week and stretches towards 50%, a progress bar, and settings for focus topics and the weekly target.</figcaption></figure>
+</section>
+
+<section class="page">
+<h3 style="margin-top:0">Accessibility</h3>
+<ul>
+  <li>Sufficient contrast in light and dark themes (dark is the default; a toggle switches with a slow fade).</li>
+  <li>Every chart has a text label, a legend, and a "Show data as a table" option.</li>
+  <li>Colour is never the only signal: ✓/✗ marks, text labels and grey for low evidence.</li>
+  <li>Full keyboard navigation (arrow keys in tabs and topic list) with a visible focus outline.</li>
+  <li>Screen-reader labels, and live announcements while syncing.</li>
+  <li>A script-free text page at <code>/text/&lt;handle&gt;</code> for text browsers.</li>
+  <li>Responsive down to phone width; respects reduced-motion settings.</li>
+</ul>
+<figure><img src="img/dark.png" alt="Today view in dark theme"><figcaption>Dark theme (default).</figcaption></figure>
+
+<h2>6. App component</h2>
+<p>Upsolve is a web app with no login. A user enters a handle, the app imports it (progress is shown live), and the three views become available. Users can pick up to two focus topics and a weekly target; progress updates from accepted submissions after each sync. The site is deployed on Render's free plan at <b>upsolve.mohitupawar.com</b> and also runs locally with one command:</p>
+<pre>pip install -r requirements.txt
+uvicorn app.main:app --port 8000</pre>
+<p class="muted">Free-plan note: the hosted instance sleeps after ~15 idle minutes (first visit then takes ~50 s) and its database resets on restart, so handles may need re-syncing. The trained model is part of the code and is never lost.</p>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">7. Developer component: API and plugins</h2>
+<h3>REST API</h3>
+<p>Versioned under <code>/api/v1</code>, documented automatically in OpenAPI 3 (interactive at <code>/api/docs</code>, exported to <code>docs/openapi.json</code>).</p>
+<table>
+  <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+  <tr><td>POST / GET</td><td>/users/{handle}/sync</td><td>Start an import / check its status</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/profile</td><td>Ratings, counts, model in use</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/topics</td><td>Topic ratings with evidence</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/topics/{tag}/history</td><td>Daily topic rating trend</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/rating-history, /activity, /attempts</td><td>Contest history, daily activity, attempts</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/recommendations</td><td>Daily problems with reasons</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/predict/{problem_id}</td><td>Chance for one problem, with feature contributions</td></tr>
+  <tr><td>GET / PUT</td><td>/users/{handle}/training</td><td>Focus topics (max 2) and weekly target</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/plan, /feedback</td><td>Weekly plan; how past recommendations turned out</td></tr>
+  <tr><td>GET</td><td>/topics, /problems, /model, /health</td><td>Catalogue and model report</td></tr>
+  <tr><td>GET / PUT</td><td>/plugins, /plugins/{id}</td><td>Installed plugins; switch on or off</td></tr>
+  <tr><td>GET / PUT / DELETE</td><td>/plugins/{id}/store/{scope}/{key}</td><td>Per-plugin JSON storage</td></tr>
+</table>
+<figure><img src="img/apidocs.png" alt="Swagger API documentation page"><figcaption>Auto-generated interactive API documentation.</figcaption></figure>
+</section>
+
+<section class="page">
+<h3 style="margin-top:0">Plugin system</h3>
+<p>The course asks that cross-dev work run <i>inside</i> the base app rather than as a separate app. Upsolve therefore loads plugins into its own page:</p>
+<ul>
+  <li>A plugin is a folder in <code>plugins/</code> with a <code>manifest.json</code> and one JavaScript module.</li>
+  <li>The module receives a <b>host</b> object: the API client, the current handle, per-plugin storage, events (handle changed, sync finished), UI helpers and charts.</li>
+  <li>It can add a full page (its own tab) or a panel on Today, Insights or Week. Each panel runs in its own shadow DOM, so styles can't clash.</li>
+  <li>Broken plugins show an error in their own panel without breaking the app; plugins can be switched off under Plugins.</li>
+</ul>
+<p>The full guide for the partner team is the separate document <b>Upsolve Plugin Guide</b>.</p>
+<figure><img src="img/plugins.png" alt="Plugins page listing the Rival plugin"><figcaption>Plugins page: installed plugins and on/off switches.</figcaption></figure>
+<figure><img src="img/rival.png" alt="Rival plugin comparing two users"><figcaption>Example plugin "Rival": compares your topic ratings with a friend's and uses the model to find problems they solved that are within your reach. It uses only the public plugin API.</figcaption></figure>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">8. Testing</h2>
+<p>28 automated tests (<code>pytest</code>) run offline with synthetic Codeforces data. They cover:</p>
+<ul>
+  <li>Attempt rules: 24-hour window, compilation errors ignored, gym problems dropped, duplicates removed.</li>
+  <li>Incremental sync: only new submissions fetched, pending verdicts rechecked.</li>
+  <li>Elo behaviour: solving raises and failing lowers ratings; topic offsets stay relative; contest anchoring limits drift; implicit failures handled correctly.</li>
+  <li>No data leakage: each training snapshot uses only earlier attempts.</li>
+  <li>Metrics (AUC, calibration) and model training, plus the Elo fallback.</li>
+  <li>Every API endpoint, input validation and helpful errors, the plugin registry and store, and the text-only page.</li>
+</ul>
+
+<h2>9. Third-party code and services</h2>
+<table>
+  <tr><th>What</th><th>Used for</th></tr>
+  <tr><td>Codeforces API</td><td>All problem, submission and rating data (free public API, not open source)</td></tr>
+  <tr><td>FastAPI, Starlette, Pydantic, Uvicorn</td><td>Web framework, validation, server</td></tr>
+  <tr><td>httpx</td><td>Calling the Codeforces API</td></tr>
+  <tr><td>NumPy, scikit-learn</td><td>Predictions; fitting the logistic regression</td></tr>
+  <tr><td>SQLite</td><td>Storage</td></tr>
+  <tr><td>pytest</td><td>Testing</td></tr>
+  <tr><td>Hanken Grotesk (Google Fonts)</td><td>Typeface</td></tr>
+  <tr><td>Render</td><td>Hosting (free plan)</td></tr>
+</table>
+<p>Our own work: the ETL rules, the anchored Elo variant with implicit failures, the feature design, training and evaluation, the recommender, the charts, the website and the plugin system.</p>
+
+<h2>10. Repository layout</h2>
+<pre>app/          FastAPI server: ETL, Elo, model, recommender, API, plugin registry
+static/       Website: HTML, CSS, JavaScript views and charts
+plugins/      Installed plugins (rival/ is the example)
+scripts/      Build dataset, train model, export OpenAPI
+tests/        28 pytest tests
+data/         model.json (trained weights), dataset_handles.csv
+docs/         PLUGINS.md, openapi.json, these documents</pre>
+</section>
+</body>
+</html>

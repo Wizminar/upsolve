@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upsolve: Plugin Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 18mm 17mm; }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.55 "Hanken Grotesk", system-ui, sans-serif; color: #111; margin: 0; }
+  h1 { font-size: 26pt; line-height: 1.1; margin: 0 0 6pt; letter-spacing: -0.02em; }
+  h2 { font-size: 15pt; margin: 20pt 0 6pt; padding-top: 6pt; border-top: 1px solid #ddd; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 12pt 0 4pt; break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 2pt; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 9pt; background: #f2f2f5; padding: 0 3px; border-radius: 3px; }
+  pre { font-family: ui-monospace, Menlo, monospace; font-size: 8.5pt; line-height: 1.45; background: #f4f4f7; padding: 8pt 10pt; border-radius: 6px; white-space: pre-wrap; break-inside: avoid; margin: 0 0 9pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.3pt; break-inside: avoid; }
+  th, td { text-align: left; vertical-align: top; padding: 4pt 6pt 4pt 0; border-bottom: 1px solid #e6e6ea; }
+  th { font-weight: 600; color: #555; }
+  td code { white-space: nowrap; }
+  figure { margin: 6pt 0 12pt; break-inside: avoid; }
+  figure img { max-width: 100%; max-height: 112mm; width: auto; border: 1px solid #e3e3e8; border-radius: 6px; display: block; }
+  figcaption { font-size: 8.8pt; color: #666; margin-top: 4pt; }
+  .muted { color: #666; }
+  .page { break-before: page; }
+  .note { border-left: 3px solid #2F49D1; padding: 4pt 0 4pt 10pt; margin: 6pt 0 10pt; }
+  .mark { color: #2F49D1; font-size: 26pt; line-height: 1; }
+</style>
+</head>
+<body>
+
+<div class="mark">&#8963;</div>
+<h1 style="margin-top:10pt">Upsolve Plugin Guide</h1>
+<p class="muted" style="font-size:12pt">For the cross-dev team building a plugin for Upsolve (CS698B). Team The Syndicate.</p>
+
+<table style="width:auto;margin-top:10pt">
+  <tr><td><b>Live app</b></td><td>https://upsolve.mohitupawar.com</td></tr>
+  <tr><td><b>API docs</b></td><td>https://upsolve.mohitupawar.com/api/docs</td></tr>
+  <tr><td><b>Code</b></td><td>https://github.com/Wizminar/upsolve</td></tr>
+  <tr><td><b>Example plugin</b></td><td><code>plugins/rival/</code> in the repository</td></tr>
+  <tr><td><b>Demo slot</b></td><td>Saturday 28 November 2026 (base app and plugin demoed together)</td></tr>
+</table>
+
+<h2>1. What Upsolve is, in one paragraph</h2>
+<p>Upsolve is a Codeforces practice coach. A user enters a public handle; Upsolve imports their submissions, rates them per topic with an Elo-style model, and uses a logistic-regression model to estimate the chance of solving any problem. It recommends five problems a day at about a 50&ndash;70% chance, shows insights (topic ratings, contest history, activity), and builds a weekly plan. Everything your plugin needs (user data, topic ratings, predictions, recommendations) is available through the API and the plugin host described below.</p>
+
+<h2>2. How plugins work</h2>
+<p>The course asks for the cross-dev component to run <b>inside</b> the base app, not as a separate app. Upsolve supports this directly:</p>
+<ul>
+  <li>A plugin is a folder inside <code>plugins/</code> with a <code>manifest.json</code> and one JavaScript (ES module) file.</li>
+  <li>When the page loads, Upsolve imports your module and calls its default export with a <b>host</b> object.</li>
+  <li>Through the host you add a <b>page</b> (your own tab next to Today, Insights, Week) or a <b>panel</b> at the bottom of one of those views.</li>
+  <li>Your plugin gets the API client, the current handle, its own saved-data store, events, and Upsolve's UI and chart helpers.</li>
+  <li>Each panel renders inside its own shadow DOM with Upsolve's stylesheet loaded, so it looks native and your CSS can't break the app (or the other way round).</li>
+  <li>If your plugin throws an error, only your panel shows the error; the rest of Upsolve keeps working.</li>
+</ul>
+<pre>Upsolve page
+  ├── Today | Insights | Week | Plugins | Rival | <b>Your plugin tab</b>   ← slot "page"
+  ├── Today view  … <b>your panel</b>                                    ← slot "today"
+  ├── Insights view … <b>your panel</b>                                  ← slot "insights"
+  └── Week view … <b>your panel</b>                                      ← slot "plan"</pre>
+
+<figure><img src="img/rival.png" alt="Rival plugin running as a tab inside Upsolve"><figcaption>The example plugin "Rival" running as its own tab inside Upsolve. It uses only the public plugin API.</figcaption></figure>
+
+<section class="page">
+<h2 style="margin-top:0">3. Set up (about 5 minutes)</h2>
+<pre>git clone https://github.com/Wizminar/upsolve.git
+cd upsolve
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app --reload --reload-dir app --reload-dir plugins</pre>
+<p>Open <code>http://localhost:8000</code>, enter a Codeforces handle (for example <code>tourist</code>) and wait for the first import (up to a minute; Codeforces allows one request every two seconds). Static and plugin files are served with no caching, so a browser reload picks up your edits.</p>
+<p class="note">You do <b>not</b> need to rebuild the training dataset. The trained model (<code>data/model.json</code>) is in the repository.</p>
+
+<h2>4. Your first plugin</h2>
+<h3>Step 1: create the folder</h3>
+<pre>plugins/
+  streak/            ← folder name = plugin id (lowercase letters, digits, dashes)
+    manifest.json
+    plugin.js</pre>
+<h3>Step 2: manifest.json</h3>
+<pre>{
+  "id": "streak",
+  "name": "Streak",
+  "version": "1.0.0",
+  "description": "Shows your current practice streak.",
+  "author": "Team name",
+  "entry": "plugin.js",
+  "slots": ["insights"],
+  "api_version": "1"
+}</pre>
+<table>
+  <tr><th>Field</th><th>Required</th><th>Notes</th></tr>
+  <tr><td><code>id</code></td><td>yes</td><td>Must equal the folder name.</td></tr>
+  <tr><td><code>name</code>, <code>version</code></td><td>yes</td><td>Shown in the Plugins list.</td></tr>
+  <tr><td><code>entry</code></td><td>yes</td><td>The ES module file inside the folder.</td></tr>
+  <tr><td><code>slots</code></td><td>no</td><td>Where you draw: <code>page</code>, <code>today</code>, <code>insights</code>, <code>plan</code>.</td></tr>
+  <tr><td><code>description</code>, <code>author</code></td><td>no</td><td>Shown in the Plugins list.</td></tr>
+</table>
+<p>If the manifest is invalid, the Plugins page and <code>GET /api/v1/plugins</code> say exactly what is wrong.</p>
+
+<h3>Step 3: plugin.js</h3>
+<pre>export default function register(host) {
+  const { h } = host.ui;
+
+  host.addPanel({
+    slot: "insights",
+    title: "Streak",
+    async render(el, ctx) {
+      const days = await host.api.activity(ctx.handle, 60);   // [{day, submissions, accepted}]
+      const active = new Set(days.filter((d) =&gt; d.accepted &gt; 0).map((d) =&gt; d.day));
+      let streak = 0;
+      for (let d = new Date(); active.has(d.toLocaleDateString("sv-SE")); d.setDate(d.getDate() - 1)) streak++;
+      await host.store.set("best", Math.max(streak, (await host.store.get("best")) || 0));
+      el.replaceChildren(
+        h("p", null, `Current streak: ${streak} day(s).`),
+        h("p", null, `Best seen: ${await host.store.get("best")} day(s).`));
+    },
+  });
+}</pre>
+<p>Reload the page: a "Streak" panel appears at the bottom of Insights.</p>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">5. Host reference</h2>
+<table>
+  <tr><th>Member</th><th>What it does</th></tr>
+  <tr><td><code>host.apiVersion</code></td><td><code>"1"</code></td></tr>
+  <tr><td><code>host.plugin</code></td><td><code>{id, name, version}</code> from your manifest</td></tr>
+  <tr><td><code>host.handle</code></td><td>Handle currently open in Upsolve (or <code>null</code>)</td></tr>
+  <tr><td><code>host.addPanel({slot, title, render})</code></td><td>Mount UI. <code>render(el, ctx)</code> is called each time the view is shown; <code>ctx.handle</code> is the current user. On Today, <code>ctx.recommendations</code> is passed; on Insights, <code>ctx.topics</code>; on Week, <code>ctx.plan</code>.</td></tr>
+  <tr><td><code>host.store.get(key, {scope})</code></td><td>Read a saved JSON value (<code>undefined</code> if none)</td></tr>
+  <tr><td><code>host.store.set(key, value, {scope})</code></td><td>Save any JSON value (max 256 KB)</td></tr>
+  <tr><td><code>host.store.list({scope})</code>, <code>remove(key, {scope})</code></td><td>List all values / delete one</td></tr>
+  <tr><td></td><td><code>scope</code> defaults to the current handle; use <code>{scope: "_global"}</code> for data shared across users</td></tr>
+  <tr><td><code>host.on(event, fn)</code></td><td><code>"handle"</code> when the user switches handle; <code>"sync"</code> after an import finishes. Returns an unsubscribe function.</td></tr>
+  <tr><td><code>host.notify(text)</code></td><td>Show a message in Upsolve's status bar (read out by screen readers)</td></tr>
+  <tr><td><code>host.ui.h(tag, attrs, ...children)</code></td><td>Create HTML elements safely (text is never parsed as HTML)</td></tr>
+  <tr><td><code>host.ui.s(tag, attrs, ...children)</code></td><td>Same, for SVG</td></tr>
+  <tr><td><code>host.ui.dataTable(caption, headers, rows)</code></td><td>"Show data as a table" toggle for charts (accessibility)</td></tr>
+  <tr><td><code>host.ui.rankOf(r)</code>, <code>fillVar(r)</code>, <code>pct(p)</code>, <code>fmtDate(ts)</code></td><td>Codeforces rank name/colour, percentage and date formatting</td></tr>
+  <tr><td><code>host.ui.charts.lineChart(...)</code>, <code>heatmap(days)</code>, <code>calibration(bins)</code></td><td>Upsolve's own SVG charts</td></tr>
+</table>
+
+<h3>API client helpers (<code>host.api</code>)</h3>
+<table>
+  <tr><th>Helper</th><th>Returns</th></tr>
+  <tr><td><code>profile(h)</code></td><td>Contest and practice rating, counts, model in use</td></tr>
+  <tr><td><code>topics(h)</code></td><td>Per topic: rating, attempts, solve rate, evidence level, focus flag, hardest solved</td></tr>
+  <tr><td><code>topicHistory(h, tag)</code></td><td>Daily rating points (<code>__overall__</code> for overall)</td></tr>
+  <tr><td><code>ratingHistory(h)</code>, <code>activity(h, days)</code>, <code>attempts(h, {limit, tag})</code></td><td>Contest history, submissions per day, grouped attempts</td></tr>
+  <tr><td><code>recommendations(h, {count, topic, refresh})</code></td><td>Problems with chance and reasons</td></tr>
+  <tr><td><code>predict(h, problemId)</code></td><td>Chance of solving one problem + per-feature contributions</td></tr>
+  <tr><td><code>training(h)</code>, <code>setTraining(h, {topics, weekly_target})</code>, <code>plan(h)</code></td><td>Focus topics, weekly plan</td></tr>
+  <tr><td><code>startSync(h)</code>, <code>syncStatus(h)</code></td><td>Import another handle (e.g. a friend) and poll until done</td></tr>
+  <tr><td><code>allTopics()</code>, <code>model()</code>, <code>feedback(h)</code></td><td>All tags, model report, how past recommendations turned out</td></tr>
+  <tr><td><code>get / put / post / del(path, body)</code></td><td>Any endpoint, path relative to <code>/api/v1</code></td></tr>
+</table>
+<p>Errors throw an <code>ApiError</code> with a <code>.status</code>. A user endpoint returns <b>404</b> until that handle has been synced; call <code>startSync</code>, then poll <code>syncStatus</code> until <code>status</code> is <code>"done"</code> (see <code>plugins/rival/plugin.js</code>).</p>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">6. REST API</h2>
+<p>All endpoints are under <code>https://upsolve.mohitupawar.com/api/v1</code> (or <code>http://localhost:8000/api/v1</code>). Full schemas and a "Try it out" button are at <code>/api/docs</code>; the OpenAPI 3 file is <code>docs/openapi.json</code>.</p>
+<table>
+  <tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+  <tr><td>POST / GET</td><td>/users/{handle}/sync</td><td>Start an import (202) / its status</td></tr>
+  <tr><td>GET</td><td>/users</td><td>Handles already synced</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/profile</td><td>Profile summary</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/topics</td><td>Topic strengths</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/topics/{tag}/history</td><td>Topic rating trend</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/rating-history</td><td>Official contest ratings</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/activity?days=365</td><td>Submissions per day</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/attempts?limit=&amp;tag=</td><td>Grouped attempts</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/recommendations?count=&amp;topic=&amp;refresh=</td><td>Recommended problems</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/predict/{problem_id}</td><td>Chance for one problem</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/feedback</td><td>Predicted vs actual for past picks</td></tr>
+  <tr><td>GET / PUT</td><td>/users/{handle}/training</td><td>Focus topics and weekly target</td></tr>
+  <tr><td>GET</td><td>/users/{handle}/plan</td><td>This week's plan</td></tr>
+  <tr><td>GET</td><td>/topics, /problems, /model, /health</td><td>Catalogue and model report</td></tr>
+  <tr><td>GET / PUT</td><td>/plugins, /plugins/{id}</td><td>Plugin list; switch on or off</td></tr>
+  <tr><td>GET / PUT / DELETE</td><td>/plugins/{id}/store/{scope}/{key}</td><td>Your plugin's storage</td></tr>
+</table>
+<h3>Example</h3>
+<pre>curl -X POST https://upsolve.mohitupawar.com/api/v1/users/tourist/sync
+curl https://upsolve.mohitupawar.com/api/v1/users/tourist/sync          # poll until "done"
+curl "https://upsolve.mohitupawar.com/api/v1/users/tourist/recommendations?count=3"
+curl https://upsolve.mohitupawar.com/api/v1/users/tourist/predict/1520A</pre>
+<p>CORS is open by default, so you can also call the API from your own page while experimenting, but the final plugin must run inside Upsolve.</p>
+</section>
+
+<section class="page">
+<h2 style="margin-top:0">7. Meeting the course requirements</h2>
+<p>The brief says the plugin "must not be overtly simplistic and must itself have data/adaptive/visualization components", but can rely on the base system's API for data and ML. A simple way to cover each:</p>
+<table>
+  <tr><th>Requirement</th><th>How a plugin can meet it</th></tr>
+  <tr><td>Data</td><td>Read Upsolve data through <code>host.api</code>; save your own (user input, history, results) with <code>host.store</code>, which persists in Upsolve's database.</td></tr>
+  <tr><td>Adaptive</td><td>Use Upsolve's predictions (<code>predict</code>, <code>recommendations</code>, topic ratings) to drive your feature, or add your own simple rule or statistic that changes with the stored data.</td></tr>
+  <tr><td>Visualisation</td><td>Draw with <code>host.ui.charts</code> or your own SVG; add <code>host.ui.dataTable</code> and text labels for accessibility.</td></tr>
+</table>
+<h3>Plugin ideas that fit</h3>
+<ul>
+  <li><b>Contest simulator:</b> build a virtual round from problems at rising difficulty, time the user, and track results in the store.</li>
+  <li><b>Group leaderboard:</b> sync several handles and rank friends by topic ratings or weekly solves.</li>
+  <li><b>Weak-topic drill:</b> pick a weak topic, serve problems one at a time, and adapt difficulty from the user's last results.</li>
+  <li><b>Goal tracker:</b> set a target rating and date; project progress from the rating history.</li>
+</ul>
+
+<h2>8. Accessibility checklist</h2>
+<ul>
+  <li>Charts: <code>role="img"</code> with an <code>aria-label</code>, a legend, and <code>host.ui.dataTable</code>.</li>
+  <li>Never use colour alone; pair colours with text, numbers or symbols.</li>
+  <li>Use real <code>&lt;button&gt;</code> and <code>&lt;a&gt;</code> elements so everything works by keyboard.</li>
+  <li>Write empty and error states that tell the user what to do next.</li>
+  <li>Check both themes (the moon/sun button) since Upsolve defaults to dark.</li>
+</ul>
+
+<h2>9. Delivering your plugin</h2>
+<ol>
+  <li>Fork <code>Wizminar/upsolve</code> on GitHub and add your folder under <code>plugins/</code>.</li>
+  <li>Test locally: the plugin appears under Plugins and works for at least two handles.</li>
+  <li>Open a pull request (or send us the folder). We merge it and redeploy, so it is live at upsolve.mohitupawar.com for the demo.</li>
+  <li>For the demo, the base app and your plugin are shown together in the same slot.</li>
+</ol>
+<p class="note">Notes on the hosted version: it runs on a free plan, so it sleeps after about 15 idle minutes (first visit then takes ~50 seconds) and its database can reset on restart. Data saved with <code>host.store</code> on the hosted site may therefore disappear; for development, run Upsolve locally.</p>
+
+<h2>10. Contact</h2>
+<p>Questions, bugs or API requests: contact Team The Syndicate (Mohit Shankar Pawar, Ashirvad Dwivedi, Chaitanya Kumar, Bishal Podder). If you need a new endpoint or field, tell us early so it can be added before the demo.</p>
+</section>
+</body>
+</html>
