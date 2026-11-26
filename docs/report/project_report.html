@@ -36,19 +36,25 @@
   <h2>Contents</h2>
   <ul class="toc">
     <li><span></span><span>Abstract</span></li>
+    <li class="sub"><span></span><span><b>Part I: Self-dev portion (Upsolve)</b></span></li>
     <li><span>1</span><span>Introduction</span></li>
     <li><span>2</span><span>System design</span></li>
-    <li><span>3</span><span>Data engineering (ETL component)</span></li>
-    <li><span>4</span><span>Machine learning (AI/ML component)</span></li>
-    <li><span>5</span><span>Visualisation (VIZ component)</span></li>
-    <li><span>6</span><span>The web application (APP component)</span></li>
-    <li><span>7</span><span>API and plugins (DEV component)</span></li>
-    <li><span>8</span><span>Testing and quality</span></li>
+    <li><span>3</span><span>Data component (ETL)</span></li>
+    <li><span>4</span><span>Adaptive component (AIML)</span></li>
+    <li><span>5</span><span>Visualization component (VIZ)</span></li>
+    <li><span>6</span><span>App component (APP)</span></li>
+    <li><span>7</span><span>Dev component (DEV): API and plugins</span></li>
+    <li><span>8</span><span>Unit testing and quality</span></li>
     <li><span>9</span><span>Results</span></li>
     <li><span>10</span><span>Limitations and future work</span></li>
-    <li><span>11</span><span>Team contributions and AI usage</span></li>
-    <li><span>12</span><span>Tools, services and references</span></li>
-    <li><span>A</span><span>Appendix: running the project</span></li>
+    <li class="sub"><span></span><span><b>Part II: Cross-dev portion</b></span></li>
+    <li><span>11</span><span>Our cross-dev plugin</span></li>
+    <li class="sub"><span></span><span><b>Part III: Declarations</b></span></li>
+    <li><span>12</span><span>Third-party code, libraries and services</span></li>
+    <li><span>13</span><span>AI usage (written by the team)</span></li>
+    <li><span>14</span><span>Team contributions</span></li>
+    <li><span>A</span><span>Appendix A: running the project</span></li>
+    <li><span>B</span><span>Appendix B: API reference (OpenAPI 3.1)</span></li>
   </ul>
 
   <h2 style="margin-top:28pt">Abstract</h2>
@@ -59,6 +65,7 @@
 
 <!-- ============================================================ 1 -->
 <section class="chapter">
+  <p class="kind" style="color:#2F49D1;font-weight:600;margin:0 0 14pt">Part I: Self-dev portion (Upsolve)</p>
   <div class="num">Chapter 1</div>
   <h2>Introduction</h2>
 
@@ -97,8 +104,17 @@
     <tr><td><b>AI/ML</b></td><td>Adaptive Elo per topic, logistic regression, evaluation, recommender</td><td class="num">4</td></tr>
     <tr><td><b>VIZ</b></td><td>Topic bars, history lines, rating graph, heatmap, calibration chart</td><td class="num">5</td></tr>
     <tr><td><b>APP</b></td><td>The website: Today, Insights, Week and Plugins views, hosted online</td><td class="num">6</td></tr>
-    <tr><td><b>DEV</b></td><td>REST API with OpenAPI documentation, in-app plugin system</td><td class="num">7</td></tr>
+    <tr><td><b>DEV</b></td><td>REST API with OpenAPI documentation, in-app plugin system</td><td class="num">7, B</td></tr>
   </table>
+
+  <h3>1.5 How the project addresses the evaluation areas</h3>
+  <table>
+    <tr><th style="width:24%">Area</th><th>What it covers</th><th style="width:34%">Where in Upsolve</th></tr>
+    <tr><td>Technical experience</td><td>Ingestion, ETL, persistent storage, adaptive component</td><td>Codeforces import, cleaning rules, SQLite, adaptive Elo and logistic regression (Chapters 3, 4)</td></tr>
+    <tr><td>User experience</td><td>Visualization and app quality</td><td>Hand-drawn accessible charts, three connected views, live deployment (Chapters 5, 6)</td></tr>
+    <tr><td>Dev experience</td><td>API, testing, cross-dev</td><td>OpenAPI 3.1 API, 28 unit tests, plugin system used by a partner team (Chapters 7, 8, Appendix B)</td></tr>
+  </table>
+  <p>We deliberately kept the technology light (one Python process, one SQLite file, no front-end framework), so that every committed component could be delivered, integrated and explained.</p>
 </section>
 
 <!-- ============================================================ 2 -->
@@ -186,7 +202,7 @@
 <!-- ============================================================ 3 -->
 <section class="chapter">
   <div class="num">Chapter 3</div>
-  <h2>Data engineering (ETL component)</h2>
+  <h2>Data component (ETL)</h2>
   <p>ETL stands for <b>Extract, Transform, Load</b>: getting raw data from a source, cleaning it into a useful shape, and storing it. All of Upsolve's knowledge starts here, so the rules in this chapter directly affect the quality of the ratings and predictions.</p>
 
   <h3>3.1 Extract</h3>
@@ -246,7 +262,7 @@
 <!-- ============================================================ 4 -->
 <section class="chapter">
   <div class="num">Chapter 4</div>
-  <h2>Machine learning (AI/ML component)</h2>
+  <h2>Adaptive component (AIML)</h2>
   <p>The machine-learning part answers one question for any user and any problem: <b>what is the chance this person solves this problem?</b> Two models work together. An adaptive Elo model keeps a rating for every topic; a logistic-regression classifier turns those ratings, and other signals, into a calibrated probability. Both run live, every time someone opens a handle.</p>
 
   <h3>4.1 Why a chance, and why 60%</h3>
@@ -359,7 +375,7 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
 <!-- ============================================================ 5 -->
 <section class="chapter">
   <div class="num">Chapter 5</div>
-  <h2>Visualisation (VIZ component)</h2>
+  <h2>Visualization component (VIZ)</h2>
   <p>Every chart in Upsolve is drawn by our own JavaScript as SVG, with no chart library. This kept the design consistent, the pages light, and gave us full control over accessibility. All charts work in both light and dark themes.</p>
 
   <h3>5.1 Today: recommendations</h3>
@@ -402,7 +418,7 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
 <!-- ============================================================ 6 -->
 <section class="chapter">
   <div class="num">Chapter 6</div>
-  <h2>The web application (APP component)</h2>
+  <h2>App component (APP)</h2>
 
   <h3>6.1 User journey</h3>
   <ol class="steps">
@@ -431,25 +447,25 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
 <!-- ============================================================ 7 -->
 <section class="chapter">
   <div class="num">Chapter 7</div>
-  <h2>API and plugins (DEV component)</h2>
+  <h2>Dev component (DEV): API and plugins</h2>
 
   <h3>7.1 REST API</h3>
-  <p>Everything the website does is available through a versioned REST API under <code>/api/v1</code>, with 21 endpoints. FastAPI generates OpenAPI documentation automatically; it is interactive at <code>/api/docs</code> and exported to <code>docs/openapi.json</code>.</p>
+  <p>Everything the website does is available through a versioned REST API under <code>/api/v1</code>: <b>21 paths and 25 operations</b>, all returning JSON. The API is published in the standard <b>OpenAPI 3.1</b> format, generated automatically by FastAPI from the code and its type annotations:</p>
+  <ul>
+    <li>Interactive documentation (Swagger UI) at <code>/api/docs</code>, and ReDoc at <code>/api/redoc</code></li>
+    <li>The machine-readable document at <code>/api/v1/openapi.json</code>, also committed as <code>docs/openapi.json</code></li>
+    <li>The complete reference, every operation with parameters, request bodies, responses and data schemas, is in <b>Appendix B</b>.</li>
+  </ul>
   <table>
-    <tr><th style="width:15%">Method</th><th style="width:44%">Path</th><th>Purpose</th></tr>
-    <tr><td>POST, GET</td><td>/users/{handle}/sync</td><td>Start an import; check its progress</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/profile</td><td>Ratings, counts, model in use</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/topics</td><td>Topic ratings with evidence</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/topics/{tag}/history</td><td>Daily rating of one topic</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/rating-history, /activity, /attempts</td><td>Contest history, daily activity, attempts</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/recommendations</td><td>Daily problems with reasons</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/predict/{problem_id}</td><td>Chance for one problem, with feature contributions</td></tr>
-    <tr><td>GET, PUT</td><td>/users/{handle}/training</td><td>Focus topics and weekly target</td></tr>
-    <tr><td>GET</td><td>/users/{handle}/plan, /feedback</td><td>Weekly plan; how past picks turned out</td></tr>
-    <tr><td>GET</td><td>/topics, /problems, /model, /health</td><td>Catalogue, model report, status</td></tr>
-    <tr><td>GET, PUT</td><td>/plugins, /plugins/{id}</td><td>Installed plugins; switch on or off</td></tr>
-    <tr><td>GET, PUT, DELETE</td><td>/plugins/{id}/store/{scope}/{key}</td><td>Storage for each plugin</td></tr>
+    <tr><th style="width:22%">Group</th><th>Operations</th></tr>
+    <tr><td>Sync (ETL)</td><td>Start an import, check its status, list synced handles</td></tr>
+    <tr><td>Insights</td><td>Profile, topic ratings, topic history, contest history, activity, attempts</td></tr>
+    <tr><td>Coach (AIML)</td><td>Recommendations, single-problem prediction with feature contributions, feedback on past picks</td></tr>
+    <tr><td>Training</td><td>Focus topics and weekly target; weekly plan</td></tr>
+    <tr><td>Catalogue</td><td>Topics, problem search, model report, health</td></tr>
+    <tr><td>Plugins</td><td>Installed plugins, switch on or off, per-plugin key/value storage</td></tr>
   </table>
+  <p><b>Conventions.</b> Handles are validated (letters, digits, <code>_ . -</code>); user endpoints return <b>404</b> with a helpful message until the handle is synced; invalid input returns <b>422</b> with the standard validation error body; CORS is enabled and configurable through <code>UPSOLVE_CORS_ORIGINS</code> so other teams' front ends can call the API.</p>
   <figure>
     <img src="img/apidocs.png" alt="Interactive OpenAPI documentation page" style="max-height:80mm">
     <figcaption><b>Figure 7.1</b> Automatically generated, interactive API documentation.</figcaption>
@@ -464,8 +480,8 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
     <li>Users can switch plugins on or off on the Plugins page.</li>
   </ul>
 
-  <h3>7.3 Cross-dev</h3>
-  <p>Our cross-dev partner team built <b>Rival</b>, a plugin that runs inside Upsolve using the Upsolve API. It compares a user's topic ratings with a friend's and uses Upsolve's model to find problems the friend solved that the user is likely to solve next. It is documented in the separate <i>Rival cross-dev report</i>.</p>
+  <h3>7.3 Plugins built on Upsolve</h3>
+  <p>The plugin system was used by another team for their cross-dev work. They built <b>Rival</b>, a plugin that runs inside Upsolve using the Upsolve API. It compares a user's topic ratings with a friend's and uses Upsolve's model to find problems the friend solved that the user is likely to solve next. It is documented by that team in their own report. Our own cross-dev work, for another team’s system, is described in Part II.</p>
   <figure>
     <img src="img/plugins.png" alt="Plugins page listing the Rival plugin" style="max-height:62mm">
     <figcaption><b>Figure 7.2</b> The Plugins page with the Rival plugin installed and switched on.</figcaption>
@@ -487,6 +503,12 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
     <tr><td>API</td><td>Every endpoint, input validation and helpful error messages</td></tr>
     <tr><td>Plugins</td><td>Manifest validation, registry and plugin storage</td></tr>
     <tr><td>Accessibility</td><td>The text-only page renders without scripts</td></tr>
+  </table>
+  <h3>8.1 Full list of unit tests</h3>
+  <p>Run with <code>.venv/bin/python -m pytest</code> (all 28 pass, in about two seconds). Fixtures in <code>tests/conftest.py</code> build a temporary database and fake Codeforces responses, so no network access is needed.</p>
+  <table class="small">
+    <tr><th style="width:17%">File</th><th style="width:43%">Test</th><th>What it checks</th></tr>
+    <tr><td><code>test_api.py</code></td><td><code>test_health</code></td><td>Health endpoint responds</td></tr><tr><td><code>test_api.py</code></td><td><code>test_unsynced_handle_returns_helpful_404</code></td><td>Unsynced handle returns 404 with guidance</td></tr><tr><td><code>test_api.py</code></td><td><code>test_invalid_handle_rejected</code></td><td>Malformed handles are rejected</td></tr><tr><td><code>test_api.py</code></td><td><code>test_profile_and_insights</code></td><td>Profile, topics, history and activity endpoints</td></tr><tr><td><code>test_api.py</code></td><td><code>test_recommendations_exclude_solved</code></td><td>Recommendations never include solved problems</td></tr><tr><td><code>test_api.py</code></td><td><code>test_recommendations_are_stable_per_refresh</code></td><td>Same refresh value gives the same list</td></tr><tr><td><code>test_api.py</code></td><td><code>test_training_settings_validation</code></td><td>At most two focus topics; target within range</td></tr><tr><td><code>test_api.py</code></td><td><code>test_plan</code></td><td>Weekly plan shape and targets</td></tr><tr><td><code>test_api.py</code></td><td><code>test_predict</code></td><td>Single-problem prediction with contributions</td></tr><tr><td><code>test_api.py</code></td><td><code>test_feedback_counts_shown</code></td><td>Shown recommendations are logged and counted</td></tr><tr><td><code>test_api.py</code></td><td><code>test_plugin_registry_and_store</code></td><td>Plugin manifest validation, toggle and storage</td></tr><tr><td><code>test_api.py</code></td><td><code>test_openapi_lists_core_endpoints</code></td><td>OpenAPI document lists the core endpoints</td></tr><tr><td><code>test_api.py</code></td><td><code>test_text_view</code></td><td>Script-free text page renders</td></tr><tr><td><code>test_etl.py</code></td><td><code>test_transform_problems_drops_gym_and_special_tags</code></td><td>Gym problems and *special tag dropped</td></tr><tr><td><code>test_etl.py</code></td><td><code>test_dedup_key_matches_reused_statements</code></td><td>Div. 1 / Div. 2 duplicates share a key</td></tr><tr><td><code>test_etl.py</code></td><td><code>test_build_attempts_rules</code></td><td>24-hour solve window; compilation errors ignored</td></tr><tr><td><code>test_etl.py</code></td><td><code>test_transform_submissions_dedups_ids</code></td><td>Duplicate submission ids removed</td></tr><tr><td><code>test_etl.py</code></td><td><code>test_sync_is_incremental</code></td><td>Second sync fetches only new submissions</td></tr><tr><td><code>test_model.py</code></td><td><code>test_expected_is_symmetric</code></td><td>Elo expected scores are symmetric</td></tr><tr><td><code>test_model.py</code></td><td><code>test_solving_raises_and_failing_lowers_ratings</code></td><td>Solving raises, failing lowers the rating</td></tr><tr><td><code>test_model.py</code></td><td><code>test_topic_offsets_are_relative</code></td><td>Topic offsets are re-centred (relative)</td></tr><tr><td><code>test_model.py</code></td><td><code>test_contest_anchor_limits_drift</code></td><td>Contest anchor limits rating drift</td></tr><tr><td><code>test_model.py</code></td><td><code>test_features_use_only_past</code></td><td>Features use only earlier attempts (no leakage)</td></tr><tr><td><code>test_model.py</code></td><td><code>test_metrics</code></td><td>AUC, Brier and calibration computed correctly</td></tr><tr><td><code>test_model.py</code></td><td><code>test_predictor_falls_back_to_elo</code></td><td>Falls back to Elo without a model file</td></tr><tr><td><code>test_model.py</code></td><td><code>test_train_writes_artifact</code></td><td>Training writes a valid model.json</td></tr><tr><td><code>test_model.py</code></td><td><code>test_implicit_contest_failures</code></td><td>Unattempted contest problems become failures</td></tr><tr><td><code>test_model.py</code></td><td><code>test_implicit_games_do_not_count_as_attempts</code></td><td>Implicit games don't inflate attempt counts</td></tr>
   </table>
   <p>Beyond automated tests, we tested the hosted site with real handles across rating levels, checked every view in both themes and at phone width, and navigated the whole application by keyboard.</p>
 
@@ -516,39 +538,61 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
 
 <!-- ============================================================ 11 -->
 <section class="chapter">
+  <p class="kind" style="color:#2F49D1;font-weight:600;margin:0 0 14pt">Part II: Cross-dev portion</p>
   <div class="num">Chapter 11</div>
-  <h2>Team contributions and AI usage</h2>
-  <h3>11.1 Team contributions</h3>
+  <h2>Our cross-dev plugin</h2>
+  <p>As required, The Syndicate also built a plugin for another team's system. The course asks this portion to cover all five components of the plugin (an API description is not needed here).</p>
+  <div class="todo">
+    <p><b>To be completed by the team</b> once the cross-dev plugin is finalised. Fill in each heading below.</p>
+  </div>
   <table>
-    <tr><th style="width:32%">Member</th><th style="width:14%">Roll no.</th><th>Main contributions</th></tr>
-    <tr><td>Ashirvad Dwivedi</td><td>265005</td><td class="muted">To be filled in by the team</td></tr>
-    <tr><td>Mohit Shankar Pawar</td><td>265021</td><td class="muted">To be filled in by the team</td></tr>
-    <tr><td>Chaitanya Kumar</td><td>265009</td><td class="muted">To be filled in by the team</td></tr>
-    <tr><td>Bishal Podder</td><td>265008</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><th style="width:30%">Item</th><th>Details</th></tr>
+    <tr><td>Base project and team</td><td class="muted">Name of the system and the base team</td></tr>
+    <tr><td>Plugin name and purpose</td><td class="muted">What it adds for users of the base app</td></tr>
+    <tr><td>Data (ETL)</td><td class="muted">What data the plugin reads through the base API, any data it stores, and how</td></tr>
+    <tr><td>Adaptive (AIML)</td><td class="muted">How the plugin's behaviour adapts (may reuse the base system's models)</td></tr>
+    <tr><td>Visualization (VIZ)</td><td class="muted">Charts or views the plugin adds, and their accessibility</td></tr>
+    <tr><td>App integration (APP)</td><td class="muted">Where it appears inside the base app and how it is installed</td></tr>
+    <tr><td>Use of the base API (DEV)</td><td class="muted">Which base endpoints or plugin hooks it uses</td></tr>
+    <tr><td>Testing</td><td class="muted">How it was tested inside the base app</td></tr>
+    <tr><td>Screenshots</td><td class="muted">At least one screenshot of the plugin running inside the base app</td></tr>
   </table>
-  <h3>11.2 Use of AI tools</h3>
-  <div class="todo"><p><b>To be written by the team.</b> The course requires this section to be written by the team members themselves. Describe which AI tools were used, for which parts of the project, and how their output was checked.</p></div>
 </section>
 
 <!-- ============================================================ 12 -->
 <section class="chapter">
+  <p class="kind" style="color:#2F49D1;font-weight:600;margin:0 0 14pt">Part III: Declarations</p>
   <div class="num">Chapter 12</div>
-  <h2>Tools, services and references</h2>
-  <h3>12.1 Third-party tools and services</h3>
+  <h2>Third-party code, libraries and services</h2>
+  <p>We used the following third-party code and services. <b>No credit is claimed for their functionality</b>; we claim credit only for what we built ourselves (listed at the end of this chapter).</p>
+  <h3>12.1 Libraries</h3>
   <table>
-    <tr><th style="width:36%">Tool or service</th><th>Used for</th></tr>
-    <tr><td>Codeforces API</td><td>All problem, submission and rating data (free, public)</td></tr>
-    <tr><td>FastAPI, Starlette, Pydantic, Uvicorn</td><td>Web framework, validation and web server</td></tr>
-    <tr><td>httpx</td><td>Calling the Codeforces API</td></tr>
-    <tr><td>NumPy, scikit-learn</td><td>Fitting the logistic regression; fast predictions</td></tr>
-    <tr><td>SQLite</td><td>Storage</td></tr>
-    <tr><td>pytest</td><td>Automated tests</td></tr>
-    <tr><td>Hanken Grotesk (Google Fonts)</td><td>Typeface</td></tr>
-    <tr><td>Render, Netlify DNS</td><td>Hosting and domain records</td></tr>
+    <tr><th style="width:26%">Library</th><th style="width:12%">Version</th><th style="width:16%">Licence</th><th>Used for</th></tr>
+    <tr><td>Python</td><td>3.12 (hosted), 3.15 (local)</td><td>PSF</td><td>Language for the server, ETL and machine learning</td></tr>
+    <tr><td>FastAPI</td><td>0.165.0</td><td>MIT</td><td>Web framework, routing, automatic OpenAPI generation</td></tr>
+    <tr><td>Starlette</td><td>1.10.0</td><td>BSD-3</td><td>Underlying web toolkit used by FastAPI (static files, middleware, CORS)</td></tr>
+    <tr><td>Pydantic</td><td>2.14.4</td><td>MIT</td><td>Request and response validation; data schemas</td></tr>
+    <tr><td>Uvicorn</td><td>0.54.0</td><td>BSD-3</td><td>Web server</td></tr>
+    <tr><td>httpx</td><td>0.28.1</td><td>BSD-3</td><td>HTTP client for the Codeforces API</td></tr>
+    <tr><td>NumPy</td><td>2.5.5</td><td>BSD-3</td><td>Feature matrices and live predictions</td></tr>
+    <tr><td>scikit-learn</td><td>1.9.1</td><td>BSD-3</td><td>Fitting the logistic regression (training only)</td></tr>
+    <tr><td>SQLite</td><td>3.x (bundled with Python)</td><td>Public domain</td><td>Persistent storage</td></tr>
+    <tr><td>pytest</td><td>9.2.0</td><td>MIT</td><td>Unit tests</td></tr>
   </table>
-  <p><b>Our own work:</b> the ETL rules, the anchored Elo model with implicit failures, the feature design, training and evaluation, the recommender and its explanations, every chart, the website, the API and the plugin system.</p>
+  <h3>12.2 Services and assets</h3>
+  <table>
+    <tr><th style="width:26%">Service or asset</th><th>Used for</th></tr>
+    <tr><td>Codeforces API</td><td>All problem, submission and rating data (free, public, no key)</td></tr>
+    <tr><td>Render (free plan)</td><td>Hosting the live application</td></tr>
+    <tr><td>Netlify DNS, Hostinger</td><td>Domain records; domain registration</td></tr>
+    <tr><td>GitHub</td><td>Source code hosting</td></tr>
+    <tr><td>Hanken Grotesk (Google Fonts)</td><td>Typeface, SIL Open Font License</td></tr>
+  </table>
+  <p>No third-party chart, UI or front-end framework is used: the website is plain HTML, CSS and JavaScript.</p>
+  <h3>12.3 What we built ourselves</h3>
+  <p>The ETL rules and incremental sync; the anchored Elo model with relative topic offsets and implicit contest failures; the feature design, training pipeline and evaluation; the recommender, explanations and weekly planner; every chart; the website; the API design; and the plugin system. AI tools assisted with parts of this work, as declared in Chapter 13.</p>
 
-  <h3>12.2 References</h3>
+  <h3>12.4 References</h3>
   <ol class="small">
     <li>Codeforces API documentation. https://codeforces.com/apiHelp</li>
     <li>Elo, A. E. <i>The Rating of Chessplayers, Past and Present</i>. Arco, 1978.</li>
@@ -556,10 +600,71 @@ rating   = rating + K × (solved − expected)    solved is 1 or 0</pre>
     <li>Brier, G. W. Verification of forecasts expressed in terms of probability. <i>Monthly Weather Review</i> 78(1), 1950.</li>
     <li>Fawcett, T. An introduction to ROC analysis. <i>Pattern Recognition Letters</i> 27(8), 2006.</li>
     <li>FastAPI documentation. https://fastapi.tiangolo.com</li>
+    <li>OpenAPI Specification 3.1.0. https://spec.openapis.org/oas/v3.1.0</li>
     <li>W3C. Web Content Accessibility Guidelines (WCAG) 2.2. https://www.w3.org/TR/WCAG22/</li>
   </ol>
+</section>
 
-  <!-- ======================================================== Appendix -->
+<!-- ============================================================ 13 -->
+<section class="chapter">
+  <div class="num">Chapter 13</div>
+  <h2>AI usage</h2>
+  <div class="todo">
+    <p><b>This chapter must be written by the team members themselves, not by an AI.</b> The course requires it to be detailed and verbose, not a single line or short paragraph. Write it in your own words, in full sentences, and delete this box and every grey prompt below before submitting.</p>
+  </div>
+
+  <h3>13.1 AI tools used and how we accessed them</h3>
+  <p class="muted"><i>Name every AI tool used (and the model, if known). For each: free plan, paid plan, student offer, or a team member's own subscription? Who used it? Roughly how heavily (for example, most of the coding, or only for reviews)?</i></p>
+  <table>
+    <tr><th style="width:26%">Tool</th><th style="width:22%">Access (free / paid / other)</th><th>Used by and for</th></tr>
+    <tr><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td></tr>
+    <tr><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td></tr>
+    <tr><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td><td class="muted">&nbsp;</td></tr>
+  </table>
+
+  <h3>13.2 In what ways AI was used</h3>
+  <p class="muted"><i>Go stage by stage and be specific. For each, say what the AI did, what you did, and how you checked the result.</i></p>
+  <table>
+    <tr><th style="width:22%">Stage</th><th>Prompts to answer in your own words</th></tr>
+    <tr><td>Planning and proposal</td><td class="muted">Did AI help choose the idea, the five components, or write the proposal? What did you change?</td></tr>
+    <tr><td>ETL</td><td class="muted">Who decided the cleaning rules (24-hour window, attempts, deduplication)? Did AI write the import code? How did you check the data was right?</td></tr>
+    <tr><td>AIML</td><td class="muted">Who came up with anchoring and implicit failures, and why? How did you notice plain Elo was wrong (2238 for a 1487 user)? How did you verify the metrics?</td></tr>
+    <tr><td>VIZ and APP</td><td class="muted">How many design iterations were there, and why did you reject the earlier ones? What did you ask for (minimal, no doodles, dark/light, slow fade)?</td></tr>
+    <tr><td>DEV and testing</td><td class="muted">Did AI write the API, plugin system and tests? Did you read and run them? Any bugs you found yourselves?</td></tr>
+    <tr><td>Deployment</td><td class="muted">Hosting on Render and setting up the domains: what did AI do, what did you do by hand?</td></tr>
+    <tr><td>Report, slides, video</td><td class="muted">Which parts of these documents were AI-drafted, and what did you edit or rewrite?</td></tr>
+  </table>
+
+  <h3>13.3 Our experience</h3>
+  <p class="muted"><i>The course specifically asks about your experience. Describe real moments, with examples.</i></p>
+  <ul class="muted">
+    <li><i><b>Hallucinations:</b> any time the AI stated something wrong with confidence (a wrong fact, an API or library detail, a number), and how you caught it.</i></li>
+    <li><i><b>Intent mismatch:</b> times the output was not what you meant, for example designs you rejected or features that needed several rounds of correction.</i></li>
+    <li><i><b>Token or usage limits:</b> running out of context or quota, long sessions being cut off, and how you worked around it.</i></li>
+    <li><i><b>What worked well</b> and <b>what did not</b>: where AI saved the most time, where it slowed you down.</i></li>
+    <li><i><b>What you learned</b> about working with AI, and what you would do differently next time.</i></li>
+  </ul>
+
+  <h3>13.4 How we checked AI output</h3>
+  <p class="muted"><i>Explain your checks: running the 28 tests, evaluating the model on held-out data, testing the live site with real handles, reviewing code before committing, comparing numbers with Codeforces, and so on. Mention anything you refused or reverted.</i></p>
+
+  <h3>13.5 Reflection</h3>
+  <p class="muted"><i>In a few paragraphs: what parts of the project do you feel you own and understand fully? Which would you be able to rebuild without AI? What did each member learn?</i></p>
+</section>
+
+<!-- ============================================================ 14 -->
+<section class="chapter">
+  <div class="num">Chapter 14</div>
+  <h2>Team contributions</h2>
+  <table>
+    <tr><th style="width:32%">Member</th><th style="width:14%">Roll no.</th><th>Main contributions</th></tr>
+    <tr><td>Ashirvad Dwivedi</td><td>265005</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Mohit Shankar Pawar</td><td>265021</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Chaitanya Kumar</td><td>265009</td><td class="muted">To be filled in by the team</td></tr>
+    <tr><td>Bishal Podder</td><td>265008</td><td class="muted">To be filled in by the team</td></tr>
+  </table>
+
+<!-- ======================================================== Appendix -->
   <div class="num" style="margin-top:24pt">Appendix A</div>
   <h2>Running the project</h2>
   <pre>git clone https://github.com/Wizminar/upsolve
@@ -579,6 +684,200 @@ scripts/   Build dataset, train model, export OpenAPI
 tests/     28 pytest tests
 data/      model.json (trained weights), dataset_handles.csv
 docs/      Plugin guide, OpenAPI document, reports and presentation</pre>
+
+</section>
+
+<!-- ============================================================ Appendix B -->
+<section class="chapter">
+  <div class="num">Appendix B</div>
+  <h2>API reference (OpenAPI 3.1.0)</h2>
+  <p><b>Upsolve API</b>, version 1.0.0. Base URL: <code>https://upsolve.mohitupawar.com</code> (or <code>http://localhost:8000</code> locally). This appendix is generated directly from the OpenAPI document (<code>docs/openapi.json</code>), so it matches the running server exactly.</p>
+  <p><b>Workflow.</b> <code>POST /api/v1/users/{handle}/sync</code> starts an import; poll <code>GET /api/v1/users/{handle}/sync</code> until <code>status</code> is <code>done</code>; then read insights and recommendations. All other user endpoints return <b>404</b> until the handle is synced. Plugins call this API through the plugin host and store their own data with the <code>/plugins/{plugin_id}/store</code> endpoints.</p>
+  <h4>Example (response abridged)</h4>
+  <pre>curl -X POST https://upsolve.mohitupawar.com/api/v1/users/Mann_Chauhan/sync
+curl "https://upsolve.mohitupawar.com/api/v1/users/Mann_Chauhan/recommendations?count=5"
+
+{"handle": "Mann_Chauhan", "target": [0.5, 0.7],
+ "items": [{"problem_id": "1650G", "name": "Counting Shortcuts", "probability": 0.60,
+            "reasons": [{"kind": "zone", "text": "60% estimated chance, inside your 50-70% stretch zone"}], ...}, ...]}</pre>
+  <h3>B.1 Operations</h3>
+  <div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">POST</code> <code>/api/v1/users/{handle}/sync</code> &nbsp; <b>Start importing a handle</b></p>
+    <p class='small muted' style='margin:0 0 4pt'>Queues an incremental import: profile, new submissions, rating history and problem
+metadata (cached for 24 h). Requests to Codeforces are paced at one per ~2 s, so a first
+import of a large history can take a minute. If a sync is already running it is returned.</p>
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>202</b> Successful Response → <code>SyncJob</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/sync</code> &nbsp; <b>Latest sync status</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>SyncJob</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users</code> &nbsp; <b>List synced handles</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>include_dataset</code></td><td>query</td><td>boolean</td><td>no</td><td>default False</td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of object</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/profile</code> &nbsp; <b>Get Profile</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>Profile</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/topics</code> &nbsp; <b>Topic strengths with evidence counts</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of Topic</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/topics/{tag}/history</code> &nbsp; <b>Daily topic rating trend</b></p>
+    <p class='small muted' style='margin:0 0 4pt'>Use the tag `__overall__` for the overall practice rating.</p>
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>tag</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of HistoryPoint</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/rating-history</code> &nbsp; <b>Official contest rating history</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of RatingChange</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/activity</code> &nbsp; <b>Submissions per day</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>days</code></td><td>query</td><td>integer</td><td>no</td><td>default 365, min 7, max 730</td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of ActivityDay</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/attempts</code> &nbsp; <b>Recent attempts (grouped submissions)</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>limit</code></td><td>query</td><td>integer</td><td>no</td><td>default 50, min 1, max 500</td></tr><tr><td><code>tag</code></td><td>query</td><td>string (optional)</td><td>no</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of object</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/recommendations</code> &nbsp; <b>Daily problem recommendations</b></p>
+    <p class='small muted' style='margin:0 0 4pt'>Problems targeting a 50–70% estimated solve probability, ranked by training focus,
+weak topics, upsolve opportunities and recency. The list is stable for a day; pass a
+different `refresh` number for a new set.</p>
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>count</code></td><td>query</td><td>integer</td><td>no</td><td>default 5, min 1, max 20</td></tr><tr><td><code>topic</code></td><td>query</td><td>string (optional)</td><td>no</td><td></td></tr><tr><td><code>refresh</code></td><td>query</td><td>integer</td><td>no</td><td>default 0, min 0</td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>Recommendations</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/predict/{problem_id}</code> &nbsp; <b>Estimate the chance of solving one problem</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>problem_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>Prediction</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/feedback</code> &nbsp; <b>How past recommendations turned out</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>Feedback</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/training</code> &nbsp; <b>Get Training</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>TrainingOut</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">PUT</code> <code>/api/v1/users/{handle}/training</code> &nbsp; <b>Set up to two training topics and a weekly solve target</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    <p class='small'><b>Request body</b> (application/json): <code>TrainingSettings</code></p>
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>TrainingOut</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/users/{handle}/plan</code> &nbsp; <b>This week&#x27;s training plan</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>handle</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>Plan</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/topics</code> &nbsp; <b>All topic tags with problem counts</b></p>
+    
+    
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of object</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/problems</code> &nbsp; <b>Search the problem set</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>tag</code></td><td>query</td><td>string (optional)</td><td>no</td><td></td></tr><tr><td><code>min_rating</code></td><td>query</td><td>integer</td><td>no</td><td>default 800</td></tr><tr><td><code>max_rating</code></td><td>query</td><td>integer</td><td>no</td><td>default 3500</td></tr><tr><td><code>limit</code></td><td>query</td><td>integer</td><td>no</td><td>default 50, min 1, max 200</td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of object</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/model</code> &nbsp; <b>Model report: evaluation metrics and calibration</b></p>
+    
+    
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>object</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/health</code> &nbsp; <b>Health</b></p>
+    
+    
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>object</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/plugins</code> &nbsp; <b>Installed plugins</b></p>
+    
+    
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>array of PluginInfo</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">PUT</code> <code>/api/v1/plugins/{plugin_id}</code> &nbsp; <b>Turn a plugin on or off</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>plugin_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    <p class='small'><b>Request body</b> (application/json): <code>PluginToggle</code></p>
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>PluginInfo</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/plugins/{plugin_id}/store/{scope}</code> &nbsp; <b>All stored values</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>plugin_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>scope</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>object</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">GET</code> <code>/api/v1/plugins/{plugin_id}/store/{scope}/{key}</code> &nbsp; <b>Store Get</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>plugin_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>scope</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>key</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>StoreItem</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">PUT</code> <code>/api/v1/plugins/{plugin_id}/store/{scope}/{key}</code> &nbsp; <b>Store Put</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>plugin_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>scope</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>key</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    <p class='small'><b>Request body</b> (application/json): <code>StoreValue</code></p>
+    <p class="small" style="margin:0">Responses: <b>200</b> Successful Response → <code>StoreItem</code>; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div><div style="break-inside:avoid;margin:0 0 12pt;padding-top:6pt;border-top:1px solid #e4e4e9">
+    <p style="margin:0 0 3pt"><code style="background:#2F49D1;color:#fff;font-weight:600">DELETE</code> <code>/api/v1/plugins/{plugin_id}/store/{scope}/{key}</code> &nbsp; <b>Store Delete</b></p>
+    
+    <table class='small' style='margin:2pt 0 4pt'><tr><th>Parameter</th><th>In</th><th>Type</th><th>Required</th><th>Constraints</th></tr><tr><td><code>plugin_id</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>scope</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr><tr><td><code>key</code></td><td>path</td><td>string</td><td>yes</td><td></td></tr></table>
+    
+    <p class="small" style="margin:0">Responses: <b>204</b> Successful Response; <b>422</b> Validation Error → <code>HTTPValidationError</code></p>
+  </div>
+  <h3>B.2 Data schemas</h3>
+  <div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>ActivityDay</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>day</code></td><td>string</td><td>yes</td></tr><tr><td><code>submissions</code></td><td>integer</td><td>yes</td></tr><tr><td><code>accepted</code></td><td>integer</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Feedback</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>shown</code></td><td>integer</td><td>yes</td></tr><tr><td><code>attempted</code></td><td>integer</td><td>yes</td></tr><tr><td><code>solved</code></td><td>integer</td><td>yes</td></tr><tr><td><code>mean_predicted</code></td><td>number (optional)</td><td>yes</td></tr><tr><td><code>observed_rate</code></td><td>number (optional)</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>HTTPValidationError</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>detail</code></td><td>array of ValidationError</td><td>no</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>HistoryPoint</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>at</code></td><td>integer</td><td>yes</td></tr><tr><td><code>rating</code></td><td>integer</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Plan</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>handle</code></td><td>string</td><td>yes</td></tr><tr><td><code>week_start</code></td><td>string</td><td>yes</td></tr><tr><td><code>focus</code></td><td>array of string</td><td>yes</td></tr><tr><td><code>weekly_target</code></td><td>integer</td><td>yes</td></tr><tr><td><code>progress</code></td><td>integer</td><td>yes</td></tr><tr><td><code>days</code></td><td>array of object</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>PluginInfo</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>id</code></td><td>string</td><td>yes</td></tr><tr><td><code>name</code></td><td>string (optional)</td><td>yes</td></tr><tr><td><code>version</code></td><td>string (optional)</td><td>yes</td></tr><tr><td><code>description</code></td><td>string</td><td>no</td></tr><tr><td><code>author</code></td><td>string</td><td>no</td></tr><tr><td><code>slots</code></td><td>array of string</td><td>no</td></tr><tr><td><code>entry_url</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>valid</code></td><td>boolean</td><td>yes</td></tr><tr><td><code>errors</code></td><td>array of string</td><td>no</td></tr><tr><td><code>enabled</code></td><td>boolean</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>PluginToggle</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>enabled</code></td><td>boolean</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Prediction</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>problem_id</code></td><td>string</td><td>yes</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td></tr><tr><td><code>rating</code></td><td>integer</td><td>yes</td></tr><tr><td><code>tags</code></td><td>array of string</td><td>yes</td></tr><tr><td><code>probability</code></td><td>number</td><td>yes</td></tr><tr><td><code>elo_probability</code></td><td>number</td><td>yes</td></tr><tr><td><code>source</code></td><td>string</td><td>yes</td></tr><tr><td><code>contributions</code></td><td>object</td><td>yes</td></tr><tr><td><code>reasons</code></td><td>array of Reason</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Profile</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>handle</code></td><td>string</td><td>yes</td></tr><tr><td><code>rating</code></td><td>integer (optional)</td><td>no</td></tr><tr><td><code>max_rating</code></td><td>integer (optional)</td><td>no</td></tr><tr><td><code>rank</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>max_rank</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>avatar</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>country</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>practice_rating</code></td><td>integer</td><td>yes</td></tr><tr><td><code>practice_rank</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>submissions</code></td><td>integer</td><td>yes</td></tr><tr><td><code>attempts</code></td><td>integer</td><td>yes</td></tr><tr><td><code>problems_solved</code></td><td>integer</td><td>yes</td></tr><tr><td><code>solved_within_24h</code></td><td>integer</td><td>yes</td></tr><tr><td><code>last_synced_at</code></td><td>integer (optional)</td><td>yes</td></tr><tr><td><code>model_source</code></td><td>string</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>RatingChange</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>contest_id</code></td><td>integer</td><td>yes</td></tr><tr><td><code>contest_name</code></td><td>string (optional)</td><td>yes</td></tr><tr><td><code>rank</code></td><td>integer (optional)</td><td>yes</td></tr><tr><td><code>old_rating</code></td><td>integer (optional)</td><td>yes</td></tr><tr><td><code>new_rating</code></td><td>integer (optional)</td><td>yes</td></tr><tr><td><code>at</code></td><td>integer (optional)</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Reason</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>kind</code></td><td>string</td><td>yes</td></tr><tr><td><code>text</code></td><td>string</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Recommendation</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>problem_id</code></td><td>string</td><td>yes</td></tr><tr><td><code>name</code></td><td>string</td><td>yes</td></tr><tr><td><code>rating</code></td><td>integer</td><td>yes</td></tr><tr><td><code>rank</code></td><td>string (optional)</td><td>yes</td></tr><tr><td><code>tags</code></td><td>array of string</td><td>yes</td></tr><tr><td><code>url</code></td><td>string</td><td>yes</td></tr><tr><td><code>solved_count</code></td><td>integer</td><td>yes</td></tr><tr><td><code>probability</code></td><td>number</td><td>yes</td></tr><tr><td><code>reasons</code></td><td>array of Reason</td><td>yes</td></tr><tr><td><code>upsolve</code></td><td>boolean</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Recommendations</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>handle</code></td><td>string</td><td>yes</td></tr><tr><td><code>practice_rating</code></td><td>integer</td><td>yes</td></tr><tr><td><code>source</code></td><td>string</td><td>yes</td></tr><tr><td><code>target</code></td><td>array of number</td><td>yes</td></tr><tr><td><code>stretch_zone</code></td><td>array of integer</td><td>yes</td></tr><tr><td><code>focus</code></td><td>array of string</td><td>yes</td></tr><tr><td><code>items</code></td><td>array of Recommendation</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>StoreItem</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>key</code></td><td>string</td><td>yes</td></tr><tr><td><code>value</code></td><td>object</td><td>yes</td></tr><tr><td><code>updated_at</code></td><td>integer (optional)</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>StoreValue</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>value</code></td><td>object</td><td>yes</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>SyncJob</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>id</code></td><td>integer</td><td>yes</td></tr><tr><td><code>handle</code></td><td>string</td><td>yes</td></tr><tr><td><code>status</code></td><td>string</td><td>yes</td></tr><tr><td><code>stage</code></td><td>string (optional)</td><td>no</td></tr><tr><td><code>started_at</code></td><td>integer (optional)</td><td>no</td></tr><tr><td><code>finished_at</code></td><td>integer (optional)</td><td>no</td></tr><tr><td><code>new_submissions</code></td><td>integer</td><td>no</td></tr><tr><td><code>message</code></td><td>string (optional)</td><td>no</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>Topic</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>tag</code></td><td>string</td><td>yes</td></tr><tr><td><code>rating</code></td><td>integer</td><td>yes</td></tr><tr><td><code>rank</code></td><td>string (optional)</td><td>yes</td></tr><tr><td><code>attempts</code></td><td>integer</td><td>yes</td></tr><tr><td><code>solved</code></td><td>integer</td><td>yes</td></tr><tr><td><code>solve_rate</code></td><td>number (optional)</td><td>yes</td></tr><tr><td><code>relative</code></td><td>integer</td><td>yes</td></tr><tr><td><code>confidence</code></td><td>string</td><td>yes</td></tr><tr><td><code>focus</code></td><td>boolean</td><td>yes</td></tr><tr><td><code>hardest_solved</code></td><td>integer (optional)</td><td>no</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>TrainingOut</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>topics</code></td><td>array of string</td><td>no</td></tr><tr><td><code>weekly_target</code></td><td>integer</td><td>no</td></tr><tr><td><code>updated_at</code></td><td>integer (optional)</td><td>no</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>TrainingSettings</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>topics</code></td><td>array of string</td><td>no</td></tr><tr><td><code>weekly_target</code></td><td>integer</td><td>no</td></tr></table></div><div style="break-inside:avoid;margin:0 0 10pt"><h4 style="margin:6pt 0 2pt"><code>ValidationError</code></h4>
+    <table class="small" style="margin:0"><tr><th style="width:38%">Field</th><th>Type</th><th style="width:14%">Required</th></tr><tr><td><code>loc</code></td><td>array of string | integer (optional)</td><td>yes</td></tr><tr><td><code>msg</code></td><td>string</td><td>yes</td></tr><tr><td><code>type</code></td><td>string</td><td>yes</td></tr><tr><td><code>input</code></td><td>object</td><td>no</td></tr><tr><td><code>ctx</code></td><td>object</td><td>no</td></tr></table></div>
 </section>
 
 <script>
