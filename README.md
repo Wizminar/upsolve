@@ -1,4 +1,4 @@
-# Upsolve: a Codeforces practice coach
+# Upsolve: a Codeforces practice coach (https://upsolve.mohitupawar.com/)
 
 CS698B course project by **The Syndicate**: Ashirvad Dwivedi, Mohit Shankar Pawar, Chaitanya Kumar, Bishal Podder.
 
